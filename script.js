@@ -82,27 +82,24 @@ async function handleLogin(e) {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     
+    console.log('Attempting login with username:', username);
+    
     try {
-        console.log('Attempting login for user:', username);
-        console.log('API URL:', `${API_BASE_URL}/api/auth/login`);
-        
         const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
+            mode: 'cors',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
             },
-            mode: 'cors',
-            credentials: 'omit',
             body: JSON.stringify({ username, password }),
         });
         
         console.log('Response status:', response.status);
-        console.log('Response headers:', [...response.headers.entries()]);
+        console.log('Response headers:', response.headers);
         
         if (response.ok) {
             const data = await response.json();
-            console.log('Login successful, received data:', data);
+            console.log('Login successful:', data);
             authToken = data.accessToken;
             localStorage.setItem('authToken', authToken);
             currentUser = data;
@@ -112,22 +109,11 @@ async function handleLogin(e) {
         } else {
             const errorText = await response.text();
             console.error('Login failed:', response.status, errorText);
-            
-            if (response.status === 403) {
-                showMessage('Доступ запрещен. Проверьте настройки CORS на сервере.', 'error');
-            } else if (response.status === 401) {
-                showMessage('Неверные учетные данные', 'error');
-            } else {
-                showMessage(`Ошибка сервера: ${response.status}`, 'error');
-            }
+            showMessage(`Ошибка входа: ${response.status} - ${errorText || 'Неверные учетные данные'}`, 'error');
         }
     } catch (error) {
-        console.error('Login error:', error);
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            showMessage('Не удается подключиться к серверу. Проверьте, что сервер запущен.', 'error');
-        } else {
-            showMessage('Ошибка подключения к серверу', 'error');
-        }
+        console.error('Login error details:', error);
+        showMessage(`Ошибка подключения к серверу: ${error.message}`, 'error');
     }
 }
 
@@ -137,43 +123,23 @@ async function handleRegister(e) {
     const password = document.getElementById('regPassword').value;
     
     try {
-        console.log('Attempting registration for user:', username);
-        
         const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
             },
-            mode: 'cors',
-            credentials: 'omit',
             body: JSON.stringify({ username, password }),
         });
-        
-        console.log('Registration response status:', response.status);
         
         if (response.ok) {
             showMessage('Регистрация прошла успешно. Теперь войдите в систему.', 'success');
             showLoginPage();
         } else {
-            const errorText = await response.text();
-            console.error('Registration failed:', response.status, errorText);
-            
-            if (response.status === 403) {
-                showMessage('Доступ запрещен. Проверьте настройки CORS на сервере.', 'error');
-            } else if (response.status === 400) {
-                showMessage('Ошибка регистрации. Пользователь уже существует или неверные данные.', 'error');
-            } else {
-                showMessage(`Ошибка сервера: ${response.status}`, 'error');
-            }
+            showMessage('Ошибка регистрации. Пользователь уже существует.', 'error');
         }
     } catch (error) {
+        showMessage('Ошибка подключения к серверу', 'error');
         console.error('Register error:', error);
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            showMessage('Не удается подключиться к серверу. Проверьте, что сервер запущен.', 'error');
-        } else {
-            showMessage('Ошибка подключения к серверу', 'error');
-        }
     }
 }
 
