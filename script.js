@@ -4,6 +4,93 @@ let authToken = localStorage.getItem('authToken');
 let refreshToken = localStorage.getItem('refreshToken');
 const API_BASE_URL = 'http://localhost:8080';
 
+// Система браузерной истории
+let isNavigating = false; // Флаг для предотвращения записи в историю при программной навигации
+
+// Функции для управления браузерной историей
+function updateURL(path, state = {}) {
+    if (isNavigating) {
+        console.log('🔄 [DEBUG] Пропускаем обновление URL - программная навигация');
+        return;
+    }
+    
+    console.log(`🌐 [DEBUG] Обновление URL: ${path}`, state);
+    
+    // Обновляем URL без перезагрузки страницы
+    const newURL = `${window.location.pathname}${path}`;
+    window.history.pushState(state, '', newURL);
+}
+
+function navigateToURL(path, state = {}) {
+    console.log(`🧭 [DEBUG] Навигация к URL: ${path}`, state);
+    
+    isNavigating = true;
+    
+    // Обновляем URL
+    const newURL = `${window.location.pathname}${path}`;
+    window.history.pushState(state, '', newURL);
+    
+    // Выполняем навигацию
+    if (state.section) {
+        showSection(state.section);
+    }
+    
+    if (state.userId) {
+        showUserProfile(state.userId);
+    }
+    
+    if (state.viewType) {
+        toggleProfileView(state.viewType, state.userId);
+    }
+    
+    isNavigating = false;
+}
+
+// Обработчик события popstate (кнопки браузера назад/вперед)
+window.addEventListener('popstate', function(event) {
+    console.log('⬅️➡️ [DEBUG] Обработка popstate события:', event.state);
+    
+    if (event.state) {
+        isNavigating = true;
+        
+        // Восстанавливаем состояние страницы
+        if (event.state.section) {
+            showSection(event.state.section);
+        }
+        
+        if (event.state.userId) {
+            showUserProfile(event.state.userId);
+        }
+        
+        if (event.state.viewType) {
+            toggleProfileView(event.state.viewType, event.state.userId);
+        }
+        
+        isNavigating = false;
+    } else {
+        // Если нет состояния, возвращаемся к dashboard
+        console.log('🏠 [DEBUG] Нет состояния, возврат к dashboard');
+        showSection('dashboard');
+    }
+});
+
+// Функции для сохранения и восстановления текущей страницы
+function saveCurrentPage(pageName) {
+    localStorage.setItem('currentPage', pageName);
+    console.log(`💾 [DEBUG] Сохранена текущая страница: ${pageName}`);
+}
+
+function getCurrentPage() {
+    const savedPage = localStorage.getItem('currentPage');
+    console.log(`📖 [DEBUG] Восстановление страницы: ${savedPage || 'dashboard (по умолчанию)'}`);
+    return savedPage || 'dashboard';
+}
+
+function clearCurrentPage() {
+    localStorage.removeItem('currentPage');
+    console.log(`🗑️ [DEBUG] Очищена сохраненная страница`);
+}
+
 // DOM Elements
 const loginPage = document.getElementById('loginPage');
 const registerPage = document.getElementById('registerPage');
@@ -23,6 +110,7 @@ function initializeApp() {
         showAdminPanel();
         loadDashboardData();
         startTokenMonitoring();
+        initializeBrowserHistory();
     } else if (authToken && isTokenExpired(authToken)) {
         // Токен истек, попытаемся его обновить
         handleTokenExpiry().then(refreshed => {
@@ -30,6 +118,7 @@ function initializeApp() {
                 showAdminPanel();
                 loadDashboardData();
                 startTokenMonitoring();
+                initializeBrowserHistory();
             }
         });
     } else {
@@ -37,6 +126,55 @@ function initializeApp() {
     }
     
     setupEventListeners();
+}
+
+// Функция для инициализации браузерной истории
+function initializeBrowserHistory() {
+    console.log('🌐 [DEBUG] Инициализация браузерной истории');
+    
+    // Получаем текущий URL
+    const currentURL = window.location.hash;
+    console.log('📍 [DEBUG] Текущий URL:', currentURL);
+    
+    if (currentURL) {
+        // Парсим URL и восстанавливаем состояние
+        parseURLAndNavigate(currentURL);
+    } else {
+        // Если нет хеша, показываем dashboard
+        console.log('🏠 [DEBUG] Нет хеша в URL, показываем dashboard');
+        showSection('dashboard');
+    }
+}
+
+// Функция для парсинга URL и навигации
+function parseURLAndNavigate(url) {
+    console.log('🔍 [DEBUG] Парсинг URL:', url);
+    
+    // Убираем символ # в начале
+    const cleanURL = url.replace('#', '');
+    
+    if (cleanURL.startsWith('user/')) {
+        // URL профиля пользователя: #user/123 или #user/123/cars
+        const parts = cleanURL.split('/');
+        const userId = parseInt(parts[1]);
+        const viewType = parts[2] || 'info';
+        
+        console.log(`👤 [DEBUG] Навигация к профилю пользователя ${userId}, вид: ${viewType}`);
+        
+        isNavigating = true;
+        showUserProfile(userId);
+        if (viewType !== 'info') {
+            toggleProfileView(viewType, userId);
+        }
+        isNavigating = false;
+    } else {
+        // Обычная секция: #dashboard, #users, etc.
+        console.log(`📄 [DEBUG] Навигация к секции: ${cleanURL}`);
+        
+        isNavigating = true;
+        showSection(cleanURL);
+        isNavigating = false;
+    }
 }
 
 // Автоматический мониторинг токена
@@ -223,6 +361,7 @@ function logout() {
     refreshToken = null;
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
+    clearCurrentPage(); // Очищаем сохраненную страницу при выходе
     currentUser = null;
     showLoginPage();
 }
@@ -311,8 +450,9 @@ function showAdminPanel() {
     registerPage.classList.add('hidden');
     adminPanel.classList.remove('hidden');
     
-    // Показать dashboard по умолчанию
-    showSection('dashboard');
+    // Восстановить сохраненную страницу или показать dashboard по умолчанию
+    const savedPage = getCurrentPage();
+    showSection(savedPage);
 }
 
 function toggleSidebar() {
@@ -326,6 +466,15 @@ function closeSidebar() {
 function showSection(sectionName) {
     console.log('showSection called with:', sectionName);
     
+    // Сохраняем текущую страницу
+    saveCurrentPage(sectionName);
+    
+    // Обновляем URL и добавляем в браузерную историю
+    updateURL(`#${sectionName}`, {
+        section: sectionName,
+        type: 'section'
+    });
+    
     // Hide all sections
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active');
@@ -335,6 +484,8 @@ function showSection(sectionName) {
     let sectionId;
     if (sectionName === 'dashboard') {
         sectionId = 'dashboard';
+    } else if (sectionName === 'userProfile') {
+        sectionId = 'userProfileSection';
     } else {
         sectionId = sectionName + 'Section';
     }
@@ -347,6 +498,9 @@ function showSection(sectionName) {
         loadSectionData(sectionName);
     } else {
         console.error('Section not found:', sectionId);
+        // Если секция не найдена, показываем dashboard
+        console.log('Fallback to dashboard');
+        showSection('dashboard');
     }
 }
 
@@ -402,6 +556,218 @@ async function loadUsers() {
     }
 }
 
+// Функция для отображения профиля пользователя
+function showUserProfile(userId) {
+    console.log(`👤 [DEBUG] Отображение профиля пользователя ID: ${userId}`);
+    
+    // Сохраняем текущую страницу
+    saveCurrentPage('userProfile');
+    
+    // Обновляем URL и добавляем в браузерную историю
+    updateURL(`#user/${userId}`, {
+        section: 'userProfile',
+        userId: userId,
+        type: 'userProfile'
+    });
+    
+    // Скрываем все секции
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Показываем секцию профиля
+    const profileSection = document.getElementById('userProfileSection');
+    if (profileSection) {
+        profileSection.classList.add('active');
+        loadUserProfile(userId);
+    } else {
+        console.error('❌ [DEBUG] Секция профиля не найдена');
+    }
+}
+
+// Функция для загрузки данных профиля пользователя
+async function loadUserProfile(userId) {
+    try {
+        console.log(`📊 [DEBUG] Загрузка данных профиля для пользователя ${userId}`);
+        
+        // Получаем данные пользователя
+        const user = await fetchData(`/api/users/${userId}`);
+        
+        if (user) {
+            console.log(`✅ [DEBUG] Данные пользователя загружены:`, user);
+            displayUserProfile(user);
+        } else {
+            console.error('❌ [DEBUG] Не удалось загрузить данные пользователя');
+            showMessage('Ошибка загрузки данных пользователя', 'error');
+        }
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при загрузке профиля:', error);
+        showMessage('Ошибка при загрузке профиля пользователя', 'error');
+    }
+}
+
+// Глобальная функция для получения инициалов
+function getInitials(firstName, lastName) {
+    const first = firstName ? firstName.charAt(0).toUpperCase() : '';
+    const last = lastName ? lastName.charAt(0).toUpperCase() : '';
+    return first + last || '?';
+}
+
+// Глобальная функция для создания Instagram ссылки
+function createInstagramLink(instagramHandle) {
+    console.log(`📱 [DEBUG] Создание Instagram ссылки:`, {
+        instagramHandle: instagramHandle
+    });
+    
+    if (instagramHandle && instagramHandle.trim()) {
+        // Убираем символ @ если он есть
+        const cleanHandle = instagramHandle.replace(/^@/, '');
+        const instagramUrl = `https://instagram.com/${cleanHandle}`;
+        
+        console.log(`✅ [DEBUG] Создаем Instagram ссылку: "${instagramUrl}"`);
+        return `<a href="${instagramUrl}" target="_blank" 
+                       class="instagram-link"
+                       title="Открыть профиль в Instagram">
+                       <i class="fab fa-instagram"></i>${instagramHandle}
+                    </a>`;
+    }
+    
+    console.log(`⚠️ [DEBUG] Instagram handle отсутствует, показываем "-"`);
+    return '-';
+}
+
+// Функция для отображения данных профиля
+function displayUserProfile(user) {
+    console.log(`📝 [DEBUG] Отображение профиля пользователя:`, user);
+    
+    // Сохраняем ID текущего пользователя
+    setCurrentProfileUserId(user.id);
+    
+    // Основная информация
+    document.getElementById('profileName').textContent = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Не указано';
+    document.getElementById('profileUsername').textContent = `@${user.username || 'username'}`;
+    
+    // Аватар
+    const avatarImg = document.getElementById('profileAvatar');
+    const avatarPlaceholder = document.getElementById('profileAvatarPlaceholder');
+    
+    if (user.profilePhotoUrl && user.profilePhotoUrl.trim()) {
+        avatarImg.src = user.profilePhotoUrl;
+        avatarImg.style.display = 'block';
+        avatarPlaceholder.style.display = 'none';
+        
+        avatarImg.onerror = () => {
+            avatarImg.style.display = 'none';
+            avatarPlaceholder.style.display = 'flex';
+            avatarPlaceholder.textContent = getInitials(user.firstName, user.lastName);
+        };
+    } else {
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = 'flex';
+        avatarPlaceholder.textContent = getInitials(user.firstName, user.lastName);
+    }
+    
+    // Информация о пользователе
+    document.getElementById('profileFirstName').textContent = user.firstName || '-';
+    document.getElementById('profileLastName').textContent = user.lastName || '-';
+    document.getElementById('profileEmail').textContent = user.email || '-';
+    document.getElementById('profilePhone').textContent = user.phone || '-';
+    
+    // Instagram
+    const instagramElement = document.getElementById('profileInstagram');
+    const followersElement = document.getElementById('profileInstagramFollowers');
+    
+    if (user.instagram && user.instagram.trim()) {
+        const instagramLink = createInstagramLink(user.instagram);
+        instagramElement.innerHTML = instagramLink;
+        
+        // Загружаем количество подписчиков Instagram
+        loadInstagramFollowers(user.instagram);
+    } else {
+        instagramElement.textContent = '-';
+        followersElement.textContent = '-';
+    }
+    
+    document.getElementById('profileMotto').textContent = user.motto || '-';
+    document.getElementById('profileSponsors').textContent = user.sponsors || '-';
+    
+    // Фотографии
+    displayProfilePhotos(user);
+    
+    // Счетчики
+    updateProfileCounters(user.id);
+    
+    // Устанавливаем начальное состояние - показываем информацию о пользователе
+    toggleProfileView('info', user.id);
+}
+
+// Функция для отображения фотографий профиля
+function displayProfilePhotos(user) {
+    // Фото профиля
+    const profilePhotoImg = document.getElementById('profilePhotoDisplay');
+    const profilePhotoPlaceholder = document.getElementById('profilePhotoPlaceholder');
+    
+    if (user.profilePhotoUrl && user.profilePhotoUrl.trim()) {
+        profilePhotoImg.src = user.profilePhotoUrl;
+        profilePhotoImg.style.display = 'block';
+        profilePhotoPlaceholder.style.display = 'none';
+        
+        profilePhotoImg.onerror = () => {
+            profilePhotoImg.style.display = 'none';
+            profilePhotoPlaceholder.style.display = 'flex';
+            profilePhotoPlaceholder.textContent = 'Нет';
+        };
+    } else {
+        profilePhotoImg.style.display = 'none';
+        profilePhotoPlaceholder.style.display = 'flex';
+        profilePhotoPlaceholder.textContent = 'Нет';
+    }
+    
+    // Авторизованное фото
+    const officialPhotoImg = document.getElementById('officialPhotoDisplay');
+    const officialPhotoPlaceholder = document.getElementById('officialPhotoPlaceholder');
+    
+    if (user.officialPhotoUrl && user.officialPhotoUrl.trim()) {
+        officialPhotoImg.src = user.officialPhotoUrl;
+        officialPhotoImg.style.display = 'block';
+        officialPhotoPlaceholder.style.display = 'none';
+        
+        officialPhotoImg.onerror = () => {
+            officialPhotoImg.style.display = 'none';
+            officialPhotoPlaceholder.style.display = 'flex';
+            officialPhotoPlaceholder.textContent = 'Нет';
+        };
+    } else {
+        officialPhotoImg.style.display = 'none';
+        officialPhotoPlaceholder.style.display = 'flex';
+        officialPhotoPlaceholder.textContent = 'Нет';
+    }
+}
+
+// Функция для обновления счетчиков профиля
+function updateProfileCounters(userId) {
+    // Счетчик автомобилей
+    const cars = getUserCars(userId);
+    document.getElementById('carsCount').textContent = cars.length;
+    
+    // Заглушки для других счетчиков
+    document.getElementById('faceToFaceCount').textContent = '0'; // Пока заглушка
+    document.getElementById('messagesCount').textContent = '0'; // Пока заглушка
+}
+
+// Функции для кнопок профиля (заглушки)
+function viewUserCars() {
+    showTooltip('Просмотр автомобилей будет реализован позже');
+}
+
+function viewFaceToFace() {
+    showTooltip('Face to Face соревнования будут реализованы позже');
+}
+
+function viewMessages() {
+    showTooltip('Сообщения будут реализованы позже');
+}
+
 function displayUsers(users) {
     const tbody = document.getElementById('usersTableBody');
     tbody.innerHTML = '';
@@ -419,6 +785,7 @@ function displayUsers(users) {
         });
         
         const row = document.createElement('tr');
+        row.setAttribute('data-user-id', user.id);
         
         // Функция для создания фото профиля
         const createProfilePhoto = (photoUrl, firstName, lastName) => {
@@ -431,27 +798,17 @@ function displayUsers(users) {
             
             if (photoUrl && photoUrl.trim()) {
                 console.log(`✅ [DEBUG] URL фото найден: "${photoUrl}"`);
-                return `<div class="photo-container">
-                    <img src="${photoUrl}" alt="Фото профиля ${firstName || ''} ${lastName || ''}" class="profile-photo" 
+                return `<img src="${photoUrl}" alt="Фото профиля ${firstName || ''} ${lastName || ''}" class="profile-photo" 
                          onload="console.log('✅ [DEBUG] Изображение загружено успешно:', '${photoUrl}');"
                          onerror="console.log('❌ [DEBUG] Ошибка загрузки изображения:', '${photoUrl}'); this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="profile-photo-placeholder" style="display: none;">${initials}</div>
-                </div>`;
+                    <div class="profile-photo-placeholder" style="display: none;">${initials}</div>`;
             }
             
             console.log(`⚠️ [DEBUG] URL фото отсутствует или пустой, показываем placeholder с инициалами: "${initials}"`);
             // Создаем placeholder с инициалами пользователя
-            return `<div class="photo-container">
-                <div class="profile-photo-placeholder">${initials}</div>
-            </div>`;
+            return `<div class="profile-photo-placeholder">${initials}</div>`;
         };
         
-        // Функция для получения инициалов
-        const getInitials = (firstName, lastName) => {
-            const first = firstName ? firstName.charAt(0).toUpperCase() : '';
-            const last = lastName ? lastName.charAt(0).toUpperCase() : '';
-            return first + last || '?';
-        };
         
         // Функция для создания ссылки на фото
         const createPhotoLink = (photoUrl, text) => {
@@ -469,6 +826,7 @@ function displayUsers(users) {
             return '-';
         };
         
+        
         row.innerHTML = `
             <td>${user.id}</td>
             <td>${createProfilePhoto(user.profilePhotoUrl, user.firstName, user.lastName)}</td>
@@ -477,12 +835,13 @@ function displayUsers(users) {
             <td>${user.lastName || '-'}</td>
             <td>${user.email || '-'}</td>
             <td>${user.phone || '-'}</td>
-            <td>${user.instagram || '-'}</td>
+            <td>${createInstagramLink(user.instagram)}</td>
             <td>${user.motto || '-'}</td>
             <td>${createPhotoLink(user.officialPhotoUrl, 'Фото')}</td>
             <td>${user.sponsors || '-'}</td>
             <td>
                 <div class="action-buttons">
+                    <button class="btn-cars" onclick="viewUserCars(${user.id})">Cars</button>
                     <button class="btn-edit" onclick="editUser(${user.id})">Изменить</button>
                     <button class="btn-delete" onclick="deleteUser(${user.id})">Удалить</button>
                 </div>
@@ -493,6 +852,9 @@ function displayUsers(users) {
     });
     
     console.log('✅ [DEBUG] Отображение пользователей завершено. Всего строк в таблице:', tbody.children.length);
+    
+    // Добавляем обработчики клика для строк пользователей
+    addUserRowClickHandlers();
     
     // Автоматическая отладка пользователя 9
     const user9 = users.find(user => user.id === 9);
@@ -530,6 +892,9 @@ function filterUsers() {
             row.style.display = 'none';
         }
     });
+    
+    // После фильтрации переустанавливаем обработчики клика для видимых строк
+    addUserRowClickHandlers();
 }
 
 async function deleteUser(userId) {
@@ -1381,4 +1746,714 @@ window.testImageUrl = function(url) {
         console.log(`📊 [DEBUG] Результат тестирования "${url}": ${available ? '✅ Доступно' : '❌ Недоступно'}`);
     });
 };
+
+window.testInstagramLinks = function() {
+    console.log('📱 [DEBUG] Тестирование Instagram ссылок');
+    const rows = document.querySelectorAll('#usersTableBody tr');
+    
+    rows.forEach((row, index) => {
+        const idCell = row.cells[0];
+        const instagramCell = row.cells[7]; // Instagram колонка
+        
+        if (idCell && instagramCell) {
+            const userId = idCell.textContent;
+            const instagramLink = instagramCell.querySelector('.instagram-link');
+            
+            if (instagramLink) {
+                console.log(`👤 [DEBUG] Пользователь ID ${userId}: Instagram ссылка найдена`, {
+                    href: instagramLink.href,
+                    text: instagramLink.textContent.trim()
+                });
+            } else {
+                console.log(`👤 [DEBUG] Пользователь ID ${userId}: Instagram ссылка отсутствует, показывается "${instagramCell.textContent.trim()}"`);
+            }
+        }
+    });
+};
+
+// Функция для отладки сохранения страниц
+window.debugPageState = function() {
+    console.log('📄 [DEBUG] Отладка состояния страниц:');
+    console.log('💾 [DEBUG] Текущая сохраненная страница:', localStorage.getItem('currentPage'));
+    console.log('🔍 [DEBUG] Активные секции:', Array.from(document.querySelectorAll('.content-section.active')).map(el => el.id));
+    console.log('🎯 [DEBUG] Активная навигация:', document.querySelector('.nav-item.active')?.textContent?.trim());
+};
+
+// Универсальная функция для показа tooltip
+function showTooltip(message, buttonElement) {
+    // Удаляем предыдущий tooltip, если он есть
+    const existingTooltip = document.querySelector('.tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Создаем новый tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = message;
+    
+    // Используем координаты курсора мыши
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    
+    // Позиционируем tooltip относительно курсора
+    tooltip.style.left = `${mouseX + 10}px`;
+    tooltip.style.top = `${mouseY - 35}px`;
+    tooltip.style.transform = 'none'; // Убираем transform, так как позиционируем абсолютно
+    
+    // Добавляем tooltip в DOM
+    document.body.appendChild(tooltip);
+    
+    // Проверяем, не выходит ли tooltip за границы экрана
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Если tooltip выходит за правый край, сдвигаем влево
+    if (tooltipRect.right > windowWidth) {
+        tooltip.style.left = `${mouseX - tooltipRect.width - 10}px`;
+    }
+    
+    // Если tooltip выходит за верхний край, показываем снизу от курсора
+    if (tooltipRect.top < 0) {
+        tooltip.style.top = `${mouseY + 10}px`;
+        // Меняем стрелочку на верхнюю
+        tooltip.style.setProperty('--arrow-direction', 'bottom');
+    }
+    
+    // Показываем tooltip с анимацией
+    setTimeout(() => {
+        tooltip.classList.add('show');
+    }, 10);
+    
+    // Скрываем tooltip через 3 секунды
+    setTimeout(() => {
+        tooltip.classList.remove('show');
+        setTimeout(() => {
+            if (tooltip.parentNode) {
+                tooltip.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Функция для просмотра автомобилей пользователя
+function viewUserCars(userId = null) {
+    console.log(`🚗 [DEBUG] Просмотр автомобилей пользователя ID: ${userId || 'текущий пользователь'}`);
+    
+    // Если userId не передан, получаем его из текущего профиля
+    if (!userId) {
+        const profileSection = document.getElementById('userProfileSection');
+        if (profileSection && profileSection.classList.contains('active')) {
+            // Получаем ID из сохраненного состояния или из URL
+            userId = getCurrentProfileUserId();
+        }
+    }
+    
+    if (!userId) {
+        console.error('❌ [DEBUG] Не удалось определить ID пользователя');
+        return;
+    }
+    
+    // Переключаем отображение в профиле
+    toggleProfileView('cars', userId);
+}
+
+// Функция для получения ID текущего профиля
+function getCurrentProfileUserId() {
+    // Можно сохранять ID в глобальной переменной или в data-атрибуте
+    const profileSection = document.getElementById('userProfileSection');
+    return profileSection ? profileSection.getAttribute('data-current-user-id') : null;
+}
+
+// Функция для сохранения ID текущего пользователя в профиле
+function setCurrentProfileUserId(userId) {
+    const profileSection = document.getElementById('userProfileSection');
+    if (profileSection) {
+        profileSection.setAttribute('data-current-user-id', userId);
+    }
+}
+
+// Функция для переключения между различными видами профиля
+function toggleProfileView(viewType, userId) {
+    console.log(`🔄 [DEBUG] Переключение на вид: ${viewType} для пользователя ${userId}`);
+    
+    // Обновляем URL для текущего вида профиля
+    updateURL(`#user/${userId}/${viewType}`, {
+        section: 'userProfile',
+        userId: userId,
+        viewType: viewType,
+        type: 'profileView'
+    });
+    
+    // Скрываем все секции профиля
+    document.querySelectorAll('.profile-info-section, .profile-photos-section, .profile-cars-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Обновляем активное состояние кнопок
+    document.querySelectorAll('.profile-action-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Показываем нужную секцию и активируем соответствующую кнопку
+    switch (viewType) {
+        case 'info':
+            document.querySelector('.profile-info-section').style.display = 'block';
+            document.querySelector('.profile-photos-section').style.display = 'block';
+            document.querySelector('[onclick*="viewMessages"]').classList.add('active');
+            break;
+        case 'cars':
+            document.getElementById('profileCarsSection').style.display = 'block';
+            document.querySelector('[onclick*="viewUserCars"]').classList.add('active');
+            loadUserCarsInProfile(userId);
+            break;
+        case 'faceToFace':
+            // Пока заглушка
+            showTooltip('Face to Face соревнования будут реализованы позже');
+            break;
+        case 'messages':
+            // Пока заглушка
+            showTooltip('Сообщения будут реализованы позже');
+            break;
+    }
+}
+
+// Функция для загрузки автомобилей пользователя в профиле
+function loadUserCarsInProfile(userId) {
+    console.log(`🚗 [DEBUG] Загрузка автомобилей в профиле для пользователя ${userId}`);
+    
+    const carsList = document.getElementById('carsList');
+    if (!carsList) {
+        console.error('❌ [DEBUG] Контейнер для списка автомобилей не найден');
+        return;
+    }
+    
+    // Получаем автомобили пользователя
+    const userCars = getUserCars(userId);
+    
+    // Очищаем список
+    carsList.innerHTML = '';
+    
+    if (userCars.length === 0) {
+        carsList.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #888;">
+                <i class="fas fa-car" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                <p>У пользователя пока нет автомобилей</p>
+                <button class="btn-primary" onclick="addCarToProfile()" style="margin-top: 16px;">
+                    <i class="fas fa-plus"></i>
+                    Добавить первый автомобиль
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Отображаем каждый автомобиль
+    userCars.forEach((car, index) => {
+        const carCard = document.createElement('div');
+        carCard.className = 'car-card';
+        
+        // Функция для создания ссылки на фото
+        const createPhotoLink = (photoUrl, text) => {
+            if (photoUrl && photoUrl.trim()) {
+                return `<a href="${photoUrl}" target="_blank" class="car-photo-link">${text}</a>`;
+            }
+            return '<span style="color: #888;">-</span>';
+        };
+        
+        carCard.innerHTML = `
+            <div class="car-card-header">
+                <h4 class="car-title">${car.brand || 'Неизвестная марка'} ${car.model || 'Неизвестная модель'}</h4>
+                <div class="car-actions">
+                    <button class="car-action-btn" onclick="editCarInProfile(${car.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="car-action-btn" onclick="deleteCarFromProfile(${car.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="car-details">
+                <div class="car-detail">
+                    <span class="car-detail-label">Марка</span>
+                    <span class="car-detail-value">${car.brand || '-'}</span>
+                </div>
+                <div class="car-detail">
+                    <span class="car-detail-label">Модель</span>
+                    <span class="car-detail-value">${car.model || '-'}</span>
+                </div>
+                <div class="car-detail">
+                    <span class="car-detail-label">Год</span>
+                    <span class="car-detail-value">${car.year || '-'}</span>
+                </div>
+                <div class="car-detail">
+                    <span class="car-detail-label">Цвет</span>
+                    <span class="car-detail-value">${car.color || '-'}</span>
+                </div>
+                <div class="car-detail">
+                    <span class="car-detail-label">Мощность</span>
+                    <span class="car-detail-value">${car.horsepower ? car.horsepower + ' л.с.' : '-'}</span>
+                </div>
+                <div class="car-detail">
+                    <span class="car-detail-label">ID</span>
+                    <span class="car-detail-value">#${car.id || '-'}</span>
+                </div>
+            </div>
+            
+            <div class="car-photos">
+                ${createPhotoLink(car.photoUrl, 'Фото автомобиля')}
+                ${createPhotoLink(car.officialPhotoUrl, 'Официальное фото')}
+            </div>
+        `;
+        
+        carsList.appendChild(carCard);
+    });
+    
+    console.log(`✅ [DEBUG] Загружено ${userCars.length} автомобилей в профиле`);
+}
+
+// Функция для получения автомобилей пользователя
+function getUserCars(userId) {
+    // Пока возвращаем тестовые данные
+    const mockCars = {
+        6: [
+            { 
+                id: 1, 
+                brand: 'Toyota', 
+                model: 'Supra', 
+                year: '2020',
+                color: 'Белый',
+                horsepower: '382',
+                photoUrl: 'https://example.com/cars/toyota-supra.jpg',
+                officialPhotoUrl: 'https://example.com/cars/toyota-supra-official.jpg'
+            },
+            { 
+                id: 2, 
+                brand: 'Nissan', 
+                model: 'Silvia S15', 
+                year: '2019',
+                color: 'Серебристый',
+                horsepower: '250',
+                photoUrl: 'https://example.com/cars/nissan-s15.jpg',
+                officialPhotoUrl: 'https://example.com/cars/nissan-s15-official.jpg'
+            }
+        ],
+        7: [],
+        9: [
+            { 
+                id: 3, 
+                brand: 'BMW', 
+                model: 'E36', 
+                year: '1998',
+                color: 'Синий',
+                horsepower: '192',
+                photoUrl: 'https://example.com/cars/bmw-e36.jpg',
+                officialPhotoUrl: 'https://example.com/cars/bmw-e36-official.jpg'
+            }
+        ],
+        10: []
+    };
+    
+    return mockCars[userId] || [];
+}
+
+// Функции для работы с автомобилями
+function editCar(carId) {
+    console.log(`🔧 [DEBUG] Редактирование автомобиля ID: ${carId}`);
+    showTooltip('Редактирование автомобиля будет реализовано позже');
+}
+
+function editCarInProfile(carId) {
+    console.log(`🔧 [DEBUG] Редактирование автомобиля ID: ${carId} в профиле`);
+    showTooltip('Редактирование автомобиля будет реализовано позже');
+}
+
+function deleteCarFromProfile(carId) {
+    console.log(`🗑️ [DEBUG] Удаление автомобиля ID: ${carId} из профиля`);
+    if (confirm('Вы уверены, что хотите удалить этот автомобиль?')) {
+        showTooltip('Удаление автомобиля будет реализовано позже');
+    }
+}
+
+function addCar(userId) {
+    console.log(`➕ [DEBUG] Добавление автомобиля для пользователя ID: ${userId}`);
+    showTooltip('Добавление автомобиля будет реализовано позже');
+}
+
+// Функции для редактирования профиля пользователя
+let isEditMode = false;
+let originalUserData = null;
+
+function toggleEditMode() {
+    console.log('🖊️ [DEBUG] Переключение режима редактирования');
+    
+    if (!isEditMode) {
+        enterEditMode();
+    } else {
+        exitEditMode();
+    }
+}
+
+function enterEditMode() {
+    console.log('✏️ [DEBUG] Вход в режим редактирования');
+    
+    const userId = getCurrentProfileUserId();
+    if (!userId) {
+        showMessage('Ошибка: не найден ID пользователя', 'error');
+        return;
+    }
+    
+    // Сохраняем оригинальные данные
+    originalUserData = {
+        firstName: document.getElementById('profileFirstName').textContent,
+        lastName: document.getElementById('profileLastName').textContent,
+        email: document.getElementById('profileEmail').textContent,
+        phone: document.getElementById('profilePhone').textContent,
+        instagram: document.getElementById('profileInstagram').textContent,
+        motto: document.getElementById('profileMotto').textContent,
+        sponsors: document.getElementById('profileSponsors').textContent
+    };
+    
+    // Заполняем поля ввода текущими значениями
+    document.getElementById('editFirstName').value = originalUserData.firstName === '-' ? '' : originalUserData.firstName;
+    document.getElementById('editLastName').value = originalUserData.lastName === '-' ? '' : originalUserData.lastName;
+    document.getElementById('editEmail').value = originalUserData.email === '-' ? '' : originalUserData.email;
+    document.getElementById('editPhone').value = originalUserData.phone === '-' ? '' : originalUserData.phone;
+    
+    // Обрабатываем Instagram отдельно (может содержать HTML)
+    const instagramElement = document.getElementById('profileInstagram');
+    let instagramValue = '';
+    if (instagramElement.innerHTML !== '-') {
+        // Извлекаем текст из ссылки
+        const linkElement = instagramElement.querySelector('a');
+        if (linkElement) {
+            instagramValue = linkElement.textContent.replace('@', '');
+        }
+    }
+    document.getElementById('editInstagram').value = instagramValue;
+    
+    document.getElementById('editMotto').value = originalUserData.motto === '-' ? '' : originalUserData.motto;
+    document.getElementById('editSponsors').value = originalUserData.sponsors === '-' ? '' : originalUserData.sponsors;
+    
+    // Переключаем поля в режим редактирования
+    document.querySelectorAll('.info-item').forEach(item => {
+        item.classList.add('editing');
+    });
+    
+    // Показываем кнопки сохранения/отмены
+    document.getElementById('editButtons').style.display = 'flex';
+    document.getElementById('editProfileBtn').style.display = 'none';
+    
+    isEditMode = true;
+}
+
+function exitEditMode() {
+    console.log('❌ [DEBUG] Выход из режима редактирования');
+    
+    // Убираем класс редактирования
+    document.querySelectorAll('.info-item').forEach(item => {
+        item.classList.remove('editing');
+    });
+    
+    // Скрываем кнопки сохранения/отмены
+    document.getElementById('editButtons').style.display = 'none';
+    document.getElementById('editProfileBtn').style.display = 'block';
+    
+    isEditMode = false;
+}
+
+function cancelEdit() {
+    console.log('🚫 [DEBUG] Отмена редактирования');
+    
+    // Восстанавливаем оригинальные данные
+    if (originalUserData) {
+        document.getElementById('profileFirstName').textContent = originalUserData.firstName;
+        document.getElementById('profileLastName').textContent = originalUserData.lastName;
+        document.getElementById('profileEmail').textContent = originalUserData.email;
+        document.getElementById('profilePhone').textContent = originalUserData.phone;
+        document.getElementById('profileInstagram').innerHTML = originalUserData.instagram;
+        document.getElementById('profileMotto').textContent = originalUserData.motto;
+        document.getElementById('profileSponsors').textContent = originalUserData.sponsors;
+    }
+    
+    exitEditMode();
+}
+
+async function saveProfileChanges() {
+    console.log('💾 [DEBUG] Сохранение изменений профиля');
+    
+    const userId = getCurrentProfileUserId();
+    if (!userId) {
+        showMessage('Ошибка: не найден ID пользователя', 'error');
+        return;
+    }
+    
+    // Собираем данные из полей ввода
+    const updatedData = {
+        firstName: document.getElementById('editFirstName').value.trim(),
+        lastName: document.getElementById('editLastName').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        instagram: document.getElementById('editInstagram').value.trim(),
+        motto: document.getElementById('editMotto').value.trim(),
+        sponsors: document.getElementById('editSponsors').value.trim()
+    };
+    
+    // Валидация
+    if (!updatedData.firstName) {
+        showMessage('Имя не может быть пустым', 'error');
+        return;
+    }
+    
+    if (!updatedData.email || !isValidEmail(updatedData.email)) {
+        showMessage('Введите корректный email', 'error');
+        return;
+    }
+    
+    try {
+        // Показываем индикатор загрузки
+        const saveBtn = document.querySelector('.btn-save');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+        saveBtn.disabled = true;
+        
+        // Отправляем данные на сервер
+        const response = await fetchData(`/api/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify(updatedData)
+        });
+        
+        console.log('✅ [DEBUG] Профиль успешно обновлен:', response);
+        
+        // Обновляем отображение
+        updateProfileDisplay(updatedData);
+        
+        // Выходим из режима редактирования
+        exitEditMode();
+        
+        showMessage('Профиль успешно обновлен', 'success');
+        
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при сохранении профиля:', error);
+        showMessage('Ошибка при сохранении профиля', 'error');
+        
+        // Восстанавливаем кнопку
+        const saveBtn = document.querySelector('.btn-save');
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Сохранить';
+        saveBtn.disabled = false;
+    }
+}
+
+function updateProfileDisplay(data) {
+    console.log('🔄 [DEBUG] Обновление отображения профиля');
+    
+    // Обновляем значения
+    document.getElementById('profileFirstName').textContent = data.firstName || '-';
+    document.getElementById('profileLastName').textContent = data.lastName || '-';
+    document.getElementById('profileEmail').textContent = data.email || '-';
+    document.getElementById('profilePhone').textContent = data.phone || '-';
+    document.getElementById('profileMotto').textContent = data.motto || '-';
+    document.getElementById('profileSponsors').textContent = data.sponsors || '-';
+    
+    // Обновляем Instagram
+    const instagramElement = document.getElementById('profileInstagram');
+    if (data.instagram && data.instagram.trim()) {
+        const instagramLink = createInstagramLink(data.instagram);
+        instagramElement.innerHTML = instagramLink;
+        
+        // Перезагружаем количество подписчиков
+        loadInstagramFollowers(data.instagram);
+    } else {
+        instagramElement.textContent = '-';
+        document.getElementById('profileInstagramFollowers').textContent = '-';
+    }
+    
+    // Обновляем имя в заголовке профиля
+    const profileName = document.getElementById('profileName');
+    if (profileName) {
+        profileName.textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Не указано';
+    }
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Функции для работы с Instagram API
+async function loadInstagramFollowers(instagramHandle) {
+    console.log(`📱 [DEBUG] Загрузка подписчиков Instagram для: ${instagramHandle}`);
+    
+    // Показываем индикатор загрузки
+    const followersElement = document.getElementById('profileInstagramFollowers');
+    followersElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+    
+    try {
+        // Очищаем handle от символа @
+        const cleanHandle = instagramHandle.replace(/^@/, '');
+        
+        // Используем кэшированный API для получения данных Instagram
+        const followersCount = await getCachedInstagramFollowers(cleanHandle);
+        
+        if (followersCount !== null) {
+            followersElement.innerHTML = formatFollowersCount(followersCount);
+            console.log(`✅ [DEBUG] Подписчики загружены: ${followersCount}`);
+        } else {
+            followersElement.textContent = 'Недоступно';
+            console.log(`⚠️ [DEBUG] Не удалось получить данные о подписчиках`);
+        }
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при загрузке подписчиков Instagram:', error);
+        followersElement.textContent = 'Ошибка загрузки';
+    }
+}
+
+async function getInstagramFollowersCount(username) {
+    console.log(`🔍 [DEBUG] Получение количества подписчиков для @${username}`);
+    
+    try {
+        // Используем альтернативный API для получения данных Instagram
+        // В реальном проекте здесь должен быть ваш серверный endpoint
+        const response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Парсим данные из ответа Instagram
+            if (data.graphql && data.graphql.user) {
+                const user = data.graphql.user;
+                const followersCount = user.edge_followed_by?.count || 0;
+                console.log(`📊 [DEBUG] Найдено подписчиков: ${followersCount}`);
+                return followersCount;
+            }
+        }
+        
+        console.log(`⚠️ [DEBUG] Не удалось получить данные для @${username}`);
+        return null;
+        
+    } catch (error) {
+        console.error(`❌ [DEBUG] Ошибка при запросе к Instagram API:`, error);
+        
+        // Fallback: используем альтернативный метод через прокси
+        return await getInstagramFollowersFallback(username);
+    }
+}
+
+async function getInstagramFollowersFallback(username) {
+    console.log(`🔄 [DEBUG] Использование fallback метода для @${username}`);
+    
+    try {
+        // Используем публичный API сервис для Instagram
+        const response = await fetch(`https://instagram.com/${username}/`, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        
+        if (response.ok) {
+            const html = await response.text();
+            
+            // Ищем данные о подписчиках в HTML
+            const followersMatch = html.match(/"edge_followed_by":\{"count":(\d+)\}/);
+            if (followersMatch) {
+                const followersCount = parseInt(followersMatch[1]);
+                console.log(`📊 [DEBUG] Fallback: найдено подписчиков: ${followersCount}`);
+                return followersCount;
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error(`❌ [DEBUG] Ошибка в fallback методе:`, error);
+        return null;
+    }
+}
+
+function formatFollowersCount(count) {
+    if (count >= 1000000) {
+        return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+        return `${(count / 1000).toFixed(1)}K`;
+    } else {
+        return count.toString();
+    }
+}
+
+// Кэширование данных Instagram
+const instagramCache = new Map();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 минут
+
+async function getCachedInstagramFollowers(username) {
+    const cacheKey = `instagram_${username}`;
+    const cached = instagramCache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log(`💾 [DEBUG] Используем кэшированные данные для @${username}`);
+        return cached.followers;
+    }
+    
+    const followers = await getInstagramFollowersCount(username);
+    
+    if (followers !== null) {
+        instagramCache.set(cacheKey, {
+            followers: followers,
+            timestamp: Date.now()
+        });
+    }
+    
+    return followers;
+}
+
+// Функция для добавления обработчиков клика по строкам пользователей
+function addUserRowClickHandlers() {
+    console.log('🖱️ [DEBUG] Добавление обработчиков клика по строкам пользователей');
+    
+    const userRows = document.querySelectorAll('#usersTableBody tr[data-user-id]');
+    console.log(`📊 [DEBUG] Найдено строк пользователей: ${userRows.length}`);
+    
+    userRows.forEach(row => {
+        // Удаляем предыдущий обработчик, если он есть
+        row.removeEventListener('click', handleUserRowClick);
+        
+        // Добавляем новый обработчик
+        row.addEventListener('click', handleUserRowClick);
+        
+        console.log(`✅ [DEBUG] Обработчик добавлен для строки пользователя ID: ${row.getAttribute('data-user-id')}`);
+    });
+}
+
+// Функция-обработчик клика по строке пользователя
+function handleUserRowClick(event) {
+    console.log('🖱️ [DEBUG] Клик по строке пользователя');
+    
+    // Проверяем, не кликнули ли по кнопке, ссылке или изображению
+    const clickedElement = event.target;
+    const isClickableElement = clickedElement.closest('.action-buttons') || 
+                              clickedElement.closest('a') || 
+                              clickedElement.closest('img') ||
+                              clickedElement.closest('button');
+    
+    if (isClickableElement) {
+        console.log('🚫 [DEBUG] Клик по интерактивному элементу, игнорируем');
+        return;
+    }
+    
+    // Получаем ID пользователя из атрибута data-user-id
+    const userId = event.currentTarget.getAttribute('data-user-id');
+    
+    if (userId) {
+        console.log(`👤 [DEBUG] Переход на профиль пользователя ID: ${userId}`);
+        showUserProfile(parseInt(userId));
+    } else {
+        console.error('❌ [DEBUG] Не удалось получить ID пользователя из строки');
+    }
+}
 

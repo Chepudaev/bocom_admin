@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BOCOM Admin Panel</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=24.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -12,10 +12,6 @@
     <div id="loginPage" class="page">
         <div class="login-container">
             <div class="login-header">
-                <div class="logo">
-                    <span class="logo-b">B</span>
-                    <span class="logo-text">BOCOM</span>
-                </div>
                 <h1>Админ Панель</h1>
             </div>
             
@@ -40,10 +36,6 @@
     <div id="registerPage" class="page hidden">
         <div class="login-container">
             <div class="login-header">
-                <div class="logo">
-                    <span class="logo-b">B</span>
-                    <span class="logo-text">BOCOM</span>
-                </div>
                 <h1>Регистрация</h1>
             </div>
             
@@ -72,10 +64,6 @@
                 <button class="menu-toggle" id="menuToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <div class="logo">
-                    <span class="logo-b">B</span>
-                    <span class="logo-text">BOCOM</span>
-                </div>
             </div>
             <div class="header-right">
                 <button class="header-btn">
@@ -132,7 +120,7 @@
                 </div>
                 
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card clickable-stat-card" onclick="showSection('users')">
                         <div class="stat-icon">
                             <i class="fas fa-users"></i>
                         </div>
@@ -175,6 +163,9 @@
             <section id="usersSection" class="content-section">
                 <div class="section-header">
                     <h1>Управление пользователями</h1>
+                </div>
+                
+                <div class="user-actions">
                     <button class="btn-primary" id="addUserBtn">
                         <i class="fas fa-plus"></i>
                         Добавить пользователя
@@ -323,6 +314,153 @@
                     </div>
                 </div>
             </section>
+
+            <!-- User Profile Section -->
+            <section id="userProfileSection" class="content-section">
+                <div class="profile-header">
+                    <button class="back-button" onclick="showSection('users')">
+                        <i class="fas fa-arrow-left"></i>
+                        Назад к пользователям
+                    </button>
+                </div>
+                
+                <div class="profile-container">
+                    <!-- Left Sidebar -->
+                    <div class="profile-sidebar">
+                        <div class="profile-avatar-section">
+                            <div class="profile-avatar-container">
+                                <img id="profileAvatar" class="profile-avatar" alt="Аватар пользователя">
+                                <div id="profileAvatarPlaceholder" class="profile-avatar-placeholder" style="display: none;"></div>
+                            </div>
+                            <h2 id="profileName" class="profile-name">Имя пользователя</h2>
+                            <p id="profileUsername" class="profile-username">@username</p>
+                        </div>
+                        
+                        <div class="profile-actions">
+                            <button class="profile-action-btn" onclick="viewUserCars()">
+                                <i class="fas fa-car"></i>
+                                <span>Cars</span>
+                                <span class="action-count" id="carsCount">0</span>
+                            </button>
+                            
+                            <button class="profile-action-btn" onclick="viewFaceToFace()">
+                                <i class="fas fa-handshake"></i>
+                                <span>Face to Face</span>
+                                <span class="action-count" id="faceToFaceCount">0</span>
+                            </button>
+                            
+                            <button class="profile-action-btn" onclick="viewMessages()">
+                                <i class="fas fa-comments"></i>
+                                <span>Messages</span>
+                                <span class="action-count" id="messagesCount">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Content -->
+                    <div class="profile-content">
+                        <div class="profile-info-section">
+                            <div class="section-header">
+                                <h3 class="section-title">Информация о пользователе</h3>
+                                <div class="section-actions">
+                                    <div class="edit-buttons" id="editButtons" style="display: none;">
+                                        <button class="btn-cancel" onclick="cancelEdit()">
+                                            <i class="fas fa-times"></i>
+                                            Отмена
+                                        </button>
+                                        <button class="btn-save" onclick="saveProfileChanges()">
+                                            <i class="fas fa-save"></i>
+                                            Сохранить
+                                        </button>
+                                    </div>
+                                    <button class="btn-edit" id="editProfileBtn" onclick="toggleEditMode()">
+                                        <i class="fas fa-edit"></i>
+                                        Редактировать
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>Имя:</label>
+                                    <span class="info-value" id="profileFirstName">-</span>
+                                    <input type="text" class="info-input" id="editFirstName" placeholder="Введите имя">
+                                </div>
+                                <div class="info-item">
+                                    <label>Фамилия:</label>
+                                    <span class="info-value" id="profileLastName">-</span>
+                                    <input type="text" class="info-input" id="editLastName" placeholder="Введите фамилию">
+                                </div>
+                                <div class="info-item">
+                                    <label>Email:</label>
+                                    <span class="info-value" id="profileEmail">-</span>
+                                    <input type="email" class="info-input" id="editEmail" placeholder="Введите email">
+                                </div>
+                                <div class="info-item">
+                                    <label>Телефон:</label>
+                                    <span class="info-value" id="profilePhone">-</span>
+                                    <input type="tel" class="info-input" id="editPhone" placeholder="Введите телефон">
+                                </div>
+                                <div class="info-item">
+                                    <label>Instagram:</label>
+                                    <span class="info-value" id="profileInstagram">-</span>
+                                    <input type="text" class="info-input" id="editInstagram" placeholder="Введите Instagram handle">
+                                </div>
+                                <div class="info-item">
+                                    <label>Followers:</label>
+                                    <span class="info-value" id="profileInstagramFollowers">-</span>
+                                    <span class="info-input" style="background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.6);">Автоматически обновляется</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Комментарий:</label>
+                                    <span class="info-value" id="profileMotto">-</span>
+                                    <input type="text" class="info-input" id="editMotto" placeholder="Введите комментарий">
+                                </div>
+                                <div class="info-item">
+                                    <label>Спонсор:</label>
+                                    <span class="info-value" id="profileSponsors">-</span>
+                                    <input type="text" class="info-input" id="editSponsors" placeholder="Введите спонсора">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-photos-section">
+                            <h3 class="section-title">Фотографии</h3>
+                            <div class="photos-grid">
+                                <div class="photo-item">
+                                    <label>Фото профиля:</label>
+                                    <div class="photo-container">
+                                        <img id="profilePhotoDisplay" class="profile-photo-display" alt="Фото профиля">
+                                        <div id="profilePhotoPlaceholder" class="profile-photo-placeholder-display" style="display: none;"></div>
+                                    </div>
+                                </div>
+                                <div class="photo-item">
+                                    <label>Авторизованное фото:</label>
+                                    <div class="photo-container">
+                                        <img id="officialPhotoDisplay" class="profile-photo-display" alt="Авторизованное фото">
+                                        <div id="officialPhotoPlaceholder" class="profile-photo-placeholder-display" style="display: none;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cars Section -->
+                        <div id="profileCarsSection" class="profile-cars-section" style="display: none;">
+                            <div class="cars-header">
+                                <h3 class="section-title">Автомобили пользователя</h3>
+                                <button class="btn-add-car" onclick="addCarToProfile()">
+                                    <i class="fas fa-plus"></i>
+                                    Добавить автомобиль
+                                </button>
+                            </div>
+                            
+                            <div id="carsList" class="cars-list">
+                                <!-- Cars will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -397,7 +535,6 @@
                     <input type="text" id="userSponsors">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary modal-close">Отмена</button>
                     <button type="submit" class="btn-primary">Сохранить</button>
                 </div>
             </form>
@@ -449,7 +586,6 @@
                     <input type="number" id="eventSpectatorPrice" min="0" step="0.01" required>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary modal-close">Отмена</button>
                     <button type="submit" class="btn-primary">Сохранить</button>
                 </div>
             </form>
@@ -485,7 +621,6 @@
                     <textarea id="trackNotes"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary modal-close">Отмена</button>
                     <button type="submit" class="btn-primary">Сохранить</button>
                 </div>
             </form>
@@ -551,7 +686,6 @@
                     <input type="url" id="faceToFaceAutoPhoto2">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary modal-close">Отмена</button>
                     <button type="submit" class="btn-primary">Сохранить</button>
                 </div>
             </form>
