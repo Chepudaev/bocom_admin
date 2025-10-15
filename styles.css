@@ -1644,6 +1644,10 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.modal-content form {
+    padding: 20px;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -1781,6 +1785,10 @@ body {
     .modal-content {
         margin: 10px;
         max-height: calc(100vh - 20px);
+    }
+    
+    .modal-content form {
+        padding: 15px;
     }
     
     .form-actions {

@@ -692,6 +692,62 @@
         </div>
     </div>
 
+    <!-- Car Modal -->
+    <div id="carModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="carModalTitle">Добавить автомобиль</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="carForm">
+                <div class="form-group">
+                    <label>Марка:</label>
+                    <input type="text" id="carBrand" required>
+                    <span class="field-error" id="carBrand-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Модель:</label>
+                    <input type="text" id="carModel" required>
+                    <span class="field-error" id="carModel-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Год:</label>
+                    <input type="number" id="carYear" min="1900" max="2024" required>
+                    <span class="field-error" id="carYear-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Цвет:</label>
+                    <input type="text" id="carColor" required>
+                    <span class="field-error" id="carColor-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Мощность (л.с.):</label>
+                    <input type="number" id="carHorsepower" min="1" required>
+                    <span class="field-error" id="carHorsepower-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Класс автомобиля:</label>
+                    <input type="text" id="carClass">
+                </div>
+                <div class="form-group">
+                    <label>Дополнительный цвет:</label>
+                    <input type="text" id="carColor2">
+                </div>
+                <div class="form-group">
+                    <label>Фото пользователя (URL):</label>
+                    <input type="url" id="carUserPhotoUrl">
+                </div>
+                <div class="form-group">
+                    <label>Фото модератора (URL):</label>
+                    <input type="url" id="carModeratorPhotoUrl">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

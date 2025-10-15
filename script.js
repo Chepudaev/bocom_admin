@@ -243,6 +243,7 @@ function setupEventListeners() {
     document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
     document.getElementById('trackForm').addEventListener('submit', handleTrackSubmit);
     document.getElementById('faceToFaceForm').addEventListener('submit', handleFaceToFaceSubmit);
+    document.getElementById('carForm').addEventListener('submit', handleCarSubmit);
     
     // Очистка ошибок валидации при изменении полей
     const userFormFields = ['userName', 'userFirstName', 'userLastName', 'userEmail', 'userPhone', 'userPassword', 'userProfilePhotoUrl', 'userOfficialPhotoUrl'];
@@ -250,6 +251,15 @@ function setupEventListeners() {
         const field = document.getElementById(fieldId);
         if (field) {
             field.addEventListener('input', () => clearFieldError(fieldId));
+        }
+    });
+    
+    // Очистка ошибок валидации для полей автомобиля
+    const carFormFields = ['carBrand', 'carModel', 'carYear', 'carColor', 'carHorsepower'];
+    carFormFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', () => clearCarFieldError(fieldId));
         }
     });
     
@@ -745,14 +755,22 @@ function displayProfilePhotos(user) {
 }
 
 // Функция для обновления счетчиков профиля
-function updateProfileCounters(userId) {
-    // Счетчик автомобилей
-    const cars = getUserCars(userId);
-    document.getElementById('carsCount').textContent = cars.length;
-    
-    // Заглушки для других счетчиков
-    document.getElementById('faceToFaceCount').textContent = '0'; // Пока заглушка
-    document.getElementById('messagesCount').textContent = '0'; // Пока заглушка
+async function updateProfileCounters(userId) {
+    try {
+        // Счетчик автомобилей
+        const cars = await getUserCars(userId);
+        document.getElementById('carsCount').textContent = cars.length;
+        
+        // Заглушки для других счетчиков
+        document.getElementById('faceToFaceCount').textContent = '0'; // Пока заглушка
+        document.getElementById('messagesCount').textContent = '0'; // Пока заглушка
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при обновлении счетчиков:', error);
+        // Устанавливаем значения по умолчанию при ошибке
+        document.getElementById('carsCount').textContent = '0';
+        document.getElementById('faceToFaceCount').textContent = '0';
+        document.getElementById('messagesCount').textContent = '0';
+    }
 }
 
 // Функции для кнопок профиля (заглушки)
@@ -1144,6 +1162,47 @@ function openFaceToFaceModal(faceToFaceId = null) {
     modal.classList.add('show');
 }
 
+function openCarModal(userId = null) {
+    console.log(`🚀 [DEBUG] openCarModal вызвана с userId: ${userId}`);
+    
+    const modal = document.getElementById('carModal');
+    const title = document.getElementById('carModalTitle');
+    
+    console.log(`🔍 [DEBUG] Элементы найдены:`, {
+        modal: !!modal,
+        title: !!title
+    });
+    
+    // Очищаем все ошибки валидации
+    clearAllCarFieldErrors();
+    
+    // Если userId не передан, пытаемся получить из контекста
+    if (!userId) {
+        userId = getUserIdFromContext();
+        console.log(`🔍 [DEBUG] userId получен из контекста: ${userId}`);
+    }
+    
+    if (!userId) {
+        console.error('❌ [DEBUG] Не удалось получить userId');
+        showMessage('Ошибка: не удалось определить пользователя для добавления автомобиля', 'error');
+        return;
+    }
+    
+    // Всегда открываем в режиме "Добавить автомобиль" (не редактирование)
+    title.textContent = 'Добавить автомобиль';
+    document.getElementById('carForm').reset();
+    
+    // Сохраняем ID пользователя для создания автомобиля
+    modal.setAttribute('data-user-id', userId);
+    
+    console.log(`✅ [DEBUG] Открытие модального окна автомобиля для пользователя ID: ${userId}`);
+    console.log(`🔍 [DEBUG] Добавляем класс 'show' к модальному окну`);
+    
+    modal.classList.add('show');
+    
+    console.log(`🔍 [DEBUG] Классы модального окна после добавления:`, modal.className);
+}
+
 function closeModal() {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.remove('show');
@@ -1361,6 +1420,119 @@ async function handleFaceToFaceSubmit(e) {
     }
 }
 
+async function handleCarSubmit(e) {
+    e.preventDefault();
+    
+    // Очищаем предыдущие ошибки
+    clearAllCarFieldErrors();
+    
+    const modal = document.getElementById('carModal');
+    const userId = modal.getAttribute('data-user-id');
+    
+    if (!userId) {
+        showMessage('Ошибка: не найден ID пользователя', 'error');
+        return;
+    }
+    
+    const formData = {
+        brand: document.getElementById('carBrand').value.trim(),
+        model: document.getElementById('carModel').value.trim(),
+        year: parseInt(document.getElementById('carYear').value),
+        color: document.getElementById('carColor').value.trim(),
+        color1: document.getElementById('carColor').value.trim(), // API требует color1
+        horsepower: parseInt(document.getElementById('carHorsepower').value),
+        userId: parseInt(userId),
+        carClass: document.getElementById('carClass').value.trim(),
+        color2: document.getElementById('carColor2').value.trim(),
+        userPhotoUrl: document.getElementById('carUserPhotoUrl').value.trim(),
+        moderatorPhotoUrl: document.getElementById('carModeratorPhotoUrl').value.trim()
+    };
+    
+    // Валидация
+    if (!formData.brand) {
+        showCarFieldError('carBrand', 'Марка обязательна для заполнения');
+        return;
+    }
+    
+    if (!formData.model) {
+        showCarFieldError('carModel', 'Модель обязательна для заполнения');
+        return;
+    }
+    
+    if (!formData.year || formData.year < 1900 || formData.year > 2024) {
+        showCarFieldError('carYear', 'Год должен быть от 1900 до 2024');
+        return;
+    }
+    
+    if (!formData.color) {
+        showCarFieldError('carColor', 'Цвет обязателен для заполнения');
+        return;
+    }
+    
+    if (!formData.horsepower || formData.horsepower < 1) {
+        showCarFieldError('carHorsepower', 'Мощность должна быть больше 0');
+        return;
+    }
+    
+    try {
+        // Показываем индикатор загрузки
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+        submitBtn.disabled = true;
+        
+        console.log('🚀 [DEBUG] Отправляем данные автомобиля на сервер:', formData);
+        console.log('🌐 [DEBUG] API_BASE_URL:', API_BASE_URL);
+        console.log('🔗 [DEBUG] Полный URL:', `${API_BASE_URL}/api/cars`);
+        
+        // Отправляем данные на сервер
+        const response = await fetchData('/api/cars', 'POST', formData);
+        
+        console.log('✅ [DEBUG] Автомобиль успешно создан:', response);
+        
+        showMessage('Автомобиль успешно добавлен', 'success');
+        closeModal();
+        
+        // Обновляем отображение автомобилей
+        const usersSection = document.getElementById('usersSection');
+        if (usersSection && usersSection.classList.contains('active')) {
+            // Если мы в таблице пользователей, обновляем отображение автомобилей
+            const existingCarsRow = document.querySelector(`tr[data-cars-user-id="${userId}"]`);
+            if (existingCarsRow) {
+                // Удаляем старую строку и создаем новую с обновленными данными
+                existingCarsRow.remove();
+                toggleUserCarsInTable(parseInt(userId));
+            }
+        } else {
+            // Если мы в профиле пользователя, обновляем список автомобилей
+            loadUserCarsInProfile(parseInt(userId));
+        }
+        
+        // Обновляем счетчик автомобилей
+        updateProfileCounters(parseInt(userId));
+        
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при создании автомобиля:', error);
+        console.error('❌ [DEBUG] Тип ошибки:', error.name);
+        console.error('❌ [DEBUG] Сообщение ошибки:', error.message);
+        console.error('❌ [DEBUG] Стек ошибки:', error.stack);
+        
+        // Обработка ошибок валидации
+        if (error.message && error.message.includes('400')) {
+            showMessage('Проверьте правильность заполнения полей', 'error');
+        } else if (error.message && error.message.includes('Failed to fetch')) {
+            showMessage('Ошибка подключения к серверу. Проверьте, что API сервер запущен на порту 8080', 'error');
+        } else {
+            showMessage(`Ошибка при создании автомобиля: ${error.message}`, 'error');
+        }
+        
+        // Восстанавливаем кнопку
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
 // Helper Functions
 async function fetchData(url, method = 'GET', data = null, retryCount = 0) {
     const options = {
@@ -1457,6 +1629,32 @@ function clearFieldError(fieldName) {
 function clearAllFieldErrors() {
     const fields = ['userName', 'userFirstName', 'userLastName', 'userEmail', 'userPhone', 'userPassword', 'userProfilePhotoUrl', 'userOfficialPhotoUrl'];
     fields.forEach(field => clearFieldError(field));
+}
+
+// Функции для работы с ошибками валидации автомобилей
+function showCarFieldError(fieldName, errorMessage) {
+    const field = document.getElementById(fieldName);
+    const errorElement = document.getElementById(fieldName + '-error');
+    
+    if (field && errorElement) {
+        field.classList.add('error');
+        errorElement.textContent = errorMessage;
+    }
+}
+
+function clearCarFieldError(fieldName) {
+    const field = document.getElementById(fieldName);
+    const errorElement = document.getElementById(fieldName + '-error');
+    
+    if (field && errorElement) {
+        field.classList.remove('error');
+        errorElement.textContent = '';
+    }
+}
+
+function clearAllCarFieldErrors() {
+    const fields = ['carBrand', 'carModel', 'carYear', 'carColor', 'carHorsepower'];
+    fields.forEach(field => clearCarFieldError(field));
 }
 
 // Функция для настройки предварительного просмотра фото
@@ -1716,6 +1914,26 @@ window.debugUser = function(userId) {
     debugUserPhoto(userId);
 };
 
+// Функция для тестирования кнопки "Добавить автомобиль"
+window.testAddCarButton = function() {
+    console.log('🧪 [DEBUG] Тестирование кнопки "Добавить автомобиль"');
+    console.log('📍 [DEBUG] Текущий URL:', window.location.hash);
+    console.log('🔍 [DEBUG] ID пользователя из URL:', getCurrentProfileUserId());
+    console.log('🔍 [DEBUG] ID пользователя из контекста:', getUserIdFromContext());
+    
+    // Проверяем, что модальное окно существует
+    const modal = document.getElementById('carModal');
+    console.log('🔍 [DEBUG] Модальное окно найдено:', !!modal);
+    
+    if (modal) {
+        console.log('🔍 [DEBUG] Текущие классы модального окна:', modal.className);
+    }
+    
+    // Симулируем клик по кнопке
+    console.log('🚀 [DEBUG] Вызываем addCarToProfile()');
+    addCarToProfile();
+};
+
 window.debugAllUsers = function() {
     console.log('🔍 [DEBUG] Отладка всех пользователей в таблице');
     const rows = document.querySelectorAll('#usersTableBody tr');
@@ -1841,17 +2059,14 @@ function showTooltip(message, buttonElement) {
 function viewUserCars(userId = null) {
     console.log(`🚗 [DEBUG] Просмотр автомобилей пользователя ID: ${userId || 'текущий пользователя'}`);
     
-    // Если userId не передан, получаем его из текущего профиля
+    // Если userId не передан, получаем его из контекста
     if (!userId) {
-        const profileSection = document.getElementById('userProfileSection');
-        if (profileSection && profileSection.classList.contains('active')) {
-            // Получаем ID из сохраненного состояния или из URL
-            userId = getCurrentProfileUserId();
-        }
+        userId = getUserIdFromContext();
     }
     
     if (!userId) {
         console.error('❌ [DEBUG] Не удалось определить ID пользователя');
+        showMessage('Ошибка: не удалось определить пользователя', 'error');
         return;
     }
     
@@ -1867,9 +2082,36 @@ function viewUserCars(userId = null) {
 
 // Функция для получения ID текущего профиля
 function getCurrentProfileUserId() {
-    // Можно сохранять ID в глобальной переменной или в data-атрибуте
+    console.log('🔍 [DEBUG] Получение ID пользователя из URL');
+    
+    // Сначала пытаемся получить из URL
+    const currentURL = window.location.hash;
+    console.log('📍 [DEBUG] Текущий URL:', currentURL);
+    
+    if (currentURL && currentURL.startsWith('#user/')) {
+        const cleanURL = currentURL.replace('#', '');
+        const parts = cleanURL.split('/');
+        const userId = parseInt(parts[1]);
+        
+        console.log(`🔍 [DEBUG] Парсинг URL: cleanURL="${cleanURL}", parts=[${parts.join(', ')}], userId=${userId}`);
+        
+        if (userId && !isNaN(userId)) {
+            console.log(`✅ [DEBUG] ID пользователя из URL: ${userId}`);
+            return userId;
+        }
+    }
+    
+    // Если не удалось получить из URL, пытаемся из data-атрибута
     const profileSection = document.getElementById('userProfileSection');
-    return profileSection ? profileSection.getAttribute('data-current-user-id') : null;
+    const userIdFromData = profileSection ? profileSection.getAttribute('data-current-user-id') : null;
+    
+    if (userIdFromData) {
+        console.log(`✅ [DEBUG] ID пользователя из data-атрибута: ${userIdFromData}`);
+        return parseInt(userIdFromData);
+    }
+    
+    console.log('❌ [DEBUG] Не удалось получить ID пользователя ни из URL, ни из data-атрибута');
+    return null;
 }
 
 // Функция для сохранения ID текущего пользователя в профиле
@@ -1926,7 +2168,7 @@ function toggleProfileView(viewType, userId) {
 }
 
 // Функция для загрузки автомобилей пользователя в профиле
-function loadUserCarsInProfile(userId) {
+async function loadUserCarsInProfile(userId) {
     console.log(`🚗 [DEBUG] Загрузка автомобилей в профиле для пользователя ${userId}`);
     
     const carsList = document.getElementById('carsList');
@@ -1935,25 +2177,26 @@ function loadUserCarsInProfile(userId) {
         return;
     }
     
-    // Получаем автомобили пользователя
-    const userCars = getUserCars(userId);
-    
-    // Очищаем список
-    carsList.innerHTML = '';
-    
-    if (userCars.length === 0) {
-        carsList.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #888;">
-                <i class="fas fa-car" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
-                <p>У пользователя пока нет автомобилей</p>
-                <button class="btn-primary" onclick="addCarToProfile()" style="margin-top: 16px;">
-                    <i class="fas fa-plus"></i>
-                    Добавить первый автомобиль
-                </button>
-            </div>
-        `;
-        return;
-    }
+    try {
+        // Получаем автомобили пользователя
+        const userCars = await getUserCars(userId);
+        
+        // Очищаем список
+        carsList.innerHTML = '';
+        
+        if (userCars.length === 0) {
+            carsList.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-car" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <p>У пользователя пока нет автомобилей</p>
+                    <button class="btn-primary" onclick="addCarToProfile()" style="margin-top: 16px;">
+                        <i class="fas fa-plus"></i>
+                        Добавить первый автомобиль
+                    </button>
+                </div>
+            `;
+            return;
+        }
     
     // Отображаем каждый автомобиль
     userCars.forEach((car, index) => {
@@ -2018,10 +2261,24 @@ function loadUserCarsInProfile(userId) {
     });
     
     console.log(`✅ [DEBUG] Загружено ${userCars.length} автомобилей в профиле`);
+    
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при загрузке автомобилей в профиле:', error);
+        carsList.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #ff6b6b;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                <p>Ошибка при загрузке автомобилей</p>
+                <button class="btn-primary" onclick="loadUserCarsInProfile(${userId})" style="margin-top: 16px;">
+                    <i class="fas fa-refresh"></i>
+                    Попробовать снова
+                </button>
+            </div>
+        `;
+    }
 }
 
 // Функция для переключения отображения автомобилей в таблице
-function toggleUserCarsInTable(userId) {
+async function toggleUserCarsInTable(userId) {
     console.log(`🚗 [DEBUG] Переключение отображения автомобилей в таблице для пользователя ${userId}`);
     
     // Находим строку пользователя
@@ -2041,8 +2298,9 @@ function toggleUserCarsInTable(userId) {
         return;
     }
     
-    // Получаем автомобили пользователя
-    const userCars = getUserCars(userId);
+    try {
+        // Получаем автомобили пользователя
+        const userCars = await getUserCars(userId);
     
     // Создаем новую строку для автомобилей
     const carsRow = document.createElement('tr');
@@ -2099,54 +2357,127 @@ function toggleUserCarsInTable(userId) {
     carsRow.appendChild(carsCell);
     
     // Вставляем строку после строки пользователя
-    userRow.parentNode.insertBefore(carsRow, userRow.nextSibling);
-    
-    console.log(`✅ [DEBUG] Строка с автомобилями добавлена для пользователя ${userId}`);
+        userRow.parentNode.insertBefore(carsRow, userRow.nextSibling);
+        
+        console.log(`✅ [DEBUG] Строка с автомобилями добавлена для пользователя ${userId}`);
+        
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при загрузке автомобилей в таблице:', error);
+        
+        // Создаем строку с сообщением об ошибке
+        const carsRow = document.createElement('tr');
+        carsRow.className = 'user-cars-row';
+        carsRow.setAttribute('data-cars-user-id', userId);
+        
+        const carsCell = document.createElement('td');
+        carsCell.colSpan = 12;
+        carsCell.className = 'user-cars-content';
+        
+        carsCell.innerHTML = `
+            <div class="cars-container">
+                <div class="cars-header">Автомобили пользователя</div>
+                <div style="text-align: center; padding: 20px; color: #ff6b6b;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <p style="margin: 0;">Ошибка при загрузке автомобилей</p>
+                </div>
+            </div>
+        `;
+        
+        carsRow.appendChild(carsCell);
+        userRow.parentNode.insertBefore(carsRow, userRow.nextSibling);
+    }
 }
 
 // Функция для получения автомобилей пользователя
-function getUserCars(userId) {
-    // Пока возвращаем тестовые данные
-    const mockCars = {
-        6: [
-            { 
-                id: 1, 
-                brand: 'Toyota', 
-                model: 'Supra', 
-                year: '2020',
-                color: 'Белый',
-                horsepower: '382',
-                photoUrl: 'https://example.com/cars/toyota-supra.jpg',
-                officialPhotoUrl: 'https://example.com/cars/toyota-supra-official.jpg'
-            },
-            { 
-                id: 2, 
-                brand: 'Nissan', 
-                model: 'Silvia S15', 
-                year: '2019',
-                color: 'Серебристый',
-                horsepower: '250',
-                photoUrl: 'https://example.com/cars/nissan-s15.jpg',
-                officialPhotoUrl: 'https://example.com/cars/nissan-s15-official.jpg'
-            }
-        ],
-        7: [],
-        9: [
-            { 
-                id: 3, 
-                brand: 'BMW', 
-                model: 'E36', 
-                year: '1998',
-                color: 'Синий',
-                horsepower: '192',
-                photoUrl: 'https://example.com/cars/bmw-e36.jpg',
-                officialPhotoUrl: 'https://example.com/cars/bmw-e36-official.jpg'
-            }
-        ],
-        10: []
+async function getUserCars(userId) {
+    console.log(`🚗 [DEBUG] Получение автомобилей для пользователя ${userId}`);
+    
+    try {
+        // Получаем автомобили с сервера
+        const response = await fetchData(`/api/cars/user/${userId}`, 'GET');
+        console.log(`✅ [DEBUG] Получено ${response.length} автомобилей с сервера`);
+        return response;
+    } catch (error) {
+        console.error('❌ [DEBUG] Ошибка при получении автомобилей с сервера:', error);
+        
+        // Fallback: возвращаем моковые данные при ошибке сервера
+        const mockCars = {
+            6: [
+                { 
+                    id: 1, 
+                    brand: 'Toyota', 
+                    model: 'Supra', 
+                    year: '2020',
+                    color: 'Белый',
+                    horsepower: '382',
+                    photoUrl: 'https://example.com/cars/toyota-supra.jpg',
+                    officialPhotoUrl: 'https://example.com/cars/toyota-supra-official.jpg'
+                },
+                { 
+                    id: 2, 
+                    brand: 'Nissan', 
+                    model: 'Silvia S15', 
+                    year: '2019',
+                    color: 'Серебристый',
+                    horsepower: '250',
+                    photoUrl: 'https://example.com/cars/nissan-s15.jpg',
+                    officialPhotoUrl: 'https://example.com/cars/nissan-s15-official.jpg'
+                }
+            ],
+            7: [],
+            9: [
+                { 
+                    id: 3, 
+                    brand: 'BMW', 
+                    model: 'E36', 
+                    year: '1998',
+                    color: 'Синий',
+                    horsepower: '192',
+                    photoUrl: 'https://example.com/cars/bmw-e36.jpg',
+                    officialPhotoUrl: 'https://example.com/cars/bmw-e36-official.jpg'
+                }
+            ],
+            10: []
+        };
+        
+        const cars = mockCars[userId] || [];
+        console.log(`⚠️ [DEBUG] Используем моковые данные: ${cars.length} автомобилей`);
+        return cars;
+    }
+}
+
+// Моковая функция для создания автомобиля
+async function mockCreateCar(carData) {
+    console.log('🎭 [DEBUG] Моковое создание автомобиля:', carData);
+    
+    // Симулируем задержку API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Генерируем новый ID
+    const newId = Date.now();
+    
+    // Создаем объект автомобиля
+    const newCar = {
+        id: newId,
+        brand: carData.brand,
+        model: carData.model,
+        year: carData.year.toString(),
+        color: carData.color,
+        horsepower: carData.horsepower.toString(),
+        photoUrl: carData.userPhotoUrl || '',
+        officialPhotoUrl: carData.moderatorPhotoUrl || '',
+        userId: carData.userId
     };
     
-    return mockCars[userId] || [];
+    // Сохраняем в localStorage для демонстрации
+    const userId = carData.userId;
+    const existingCars = JSON.parse(localStorage.getItem(`user_${userId}_cars`) || '[]');
+    existingCars.push(newCar);
+    localStorage.setItem(`user_${userId}_cars`, JSON.stringify(existingCars));
+    
+    console.log('✅ [DEBUG] Автомобиль сохранен в localStorage:', newCar);
+    
+    return newCar;
 }
 
 // Функции для работы с автомобилями
@@ -2169,7 +2500,48 @@ function deleteCarFromProfile(carId) {
 
 function addCar(userId) {
     console.log(`➕ [DEBUG] Добавление автомобиля для пользователя ID: ${userId}`);
-    showTooltip('Добавление автомобиля будет реализовано позже');
+    openCarModal(userId);
+}
+
+function addCarToProfile() {
+    console.log(`➕ [DEBUG] Добавление автомобиля в профиле пользователя`);
+    
+    // Получаем ID пользователя из URL
+    const userId = getCurrentProfileUserId();
+    console.log(`🔍 [DEBUG] Полученный ID пользователя: ${userId}`);
+    
+    if (userId) {
+        console.log(`✅ [DEBUG] Открываем модальное окно для пользователя ID: ${userId}`);
+        openCarModal(userId);
+    } else {
+        console.error('❌ [DEBUG] Не удалось получить ID пользователя из URL');
+        showMessage('Ошибка: не удалось определить пользователя. Убедитесь, что вы находитесь в профиле пользователя.', 'error');
+    }
+}
+
+// Универсальная функция для получения ID пользователя
+function getUserIdFromContext() {
+    console.log('🔍 [DEBUG] Получение ID пользователя из контекста');
+    
+    // Сначала пытаемся получить из URL
+    const userIdFromURL = getCurrentProfileUserId();
+    if (userIdFromURL) {
+        return userIdFromURL;
+    }
+    
+    // Если мы в таблице пользователей, пытаемся получить из активной строки
+    const usersSection = document.getElementById('usersSection');
+    if (usersSection && usersSection.classList.contains('active')) {
+        const activeUserRow = document.querySelector('#usersTableBody tr[data-user-id]:hover');
+        if (activeUserRow) {
+            const userId = activeUserRow.getAttribute('data-user-id');
+            console.log(`✅ [DEBUG] ID пользователя из активной строки таблицы: ${userId}`);
+            return parseInt(userId);
+        }
+    }
+    
+    console.log('❌ [DEBUG] Не удалось получить ID пользователя из контекста');
+    return null;
 }
 
 // Функции для редактирования профиля пользователя
