@@ -1839,7 +1839,7 @@ function showTooltip(message, buttonElement) {
 
 // Функция для просмотра автомобилей пользователя
 function viewUserCars(userId = null) {
-    console.log(`🚗 [DEBUG] Просмотр автомобилей пользователя ID: ${userId || 'текущий пользователь'}`);
+    console.log(`🚗 [DEBUG] Просмотр автомобилей пользователя ID: ${userId || 'текущий пользователя'}`);
     
     // Если userId не передан, получаем его из текущего профиля
     if (!userId) {
@@ -1855,8 +1855,14 @@ function viewUserCars(userId = null) {
         return;
     }
     
-    // Переключаем отображение в профиле
-    toggleProfileView('cars', userId);
+    // Если мы в таблице пользователей, показываем автомобили в таблице
+    const usersSection = document.getElementById('usersSection');
+    if (usersSection && usersSection.classList.contains('active')) {
+        toggleUserCarsInTable(userId);
+    } else {
+        // Переключаем отображение в профиле
+        toggleProfileView('cars', userId);
+    }
 }
 
 // Функция для получения ID текущего профиля
@@ -2012,6 +2018,90 @@ function loadUserCarsInProfile(userId) {
     });
     
     console.log(`✅ [DEBUG] Загружено ${userCars.length} автомобилей в профиле`);
+}
+
+// Функция для переключения отображения автомобилей в таблице
+function toggleUserCarsInTable(userId) {
+    console.log(`🚗 [DEBUG] Переключение отображения автомобилей в таблице для пользователя ${userId}`);
+    
+    // Находим строку пользователя
+    const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (!userRow) {
+        console.error(`❌ [DEBUG] Строка пользователя ${userId} не найдена`);
+        return;
+    }
+    
+    // Проверяем, есть ли уже строка с автомобилями
+    const existingCarsRow = document.querySelector(`tr[data-cars-user-id="${userId}"]`);
+    
+    if (existingCarsRow) {
+        // Если строка уже существует, удаляем её
+        console.log(`🗑️ [DEBUG] Удаляем существующую строку с автомобилями для пользователя ${userId}`);
+        existingCarsRow.remove();
+        return;
+    }
+    
+    // Получаем автомобили пользователя
+    const userCars = getUserCars(userId);
+    
+    // Создаем новую строку для автомобилей
+    const carsRow = document.createElement('tr');
+    carsRow.className = 'user-cars-row';
+    carsRow.setAttribute('data-cars-user-id', userId);
+    
+    // Создаем ячейку, которая занимает всю ширину таблицы
+    const carsCell = document.createElement('td');
+    carsCell.colSpan = 12; // Количество колонок в таблице
+    carsCell.className = 'user-cars-content';
+    
+    if (userCars.length === 0) {
+        // Если у пользователя нет автомобилей
+        carsCell.innerHTML = `
+            <div class="cars-container">
+                <div class="no-cars-message">
+                    <i class="fas fa-car" style="font-size: 24px; color: #888; margin-bottom: 8px;"></i>
+                    <p style="color: #888; margin: 0;">У этого пользователя еще нет автомобилей</p>
+                </div>
+            </div>
+        `;
+    } else {
+        // Отображаем автомобили пользователя
+        let carsHTML = `
+            <div class="cars-container">
+        `;
+        
+        userCars.forEach((car, index) => {
+            // Функция для создания ссылки на фото
+            const createPhotoLink = (photoUrl, text) => {
+                if (photoUrl && photoUrl.trim()) {
+                    return `<a href="${photoUrl}" target="_blank" class="car-photo-link">${text}</a>`;
+                }
+                return '<span style="color: #888;">-</span>';
+            };
+            
+            carsHTML += `
+                <div class="car-row">
+                    <div class="car-field car-brand">${car.brand || '-'}</div>
+                    <div class="car-field car-model">${car.model || '-'}</div>
+                    <div class="car-field car-year">${car.year || '-'}</div>
+                    <div class="car-field car-color">${car.color || '-'}</div>
+                    <div class="car-field car-horsepower">${car.horsepower ? car.horsepower + ' л.с.' : '-'}</div>
+                    <div class="car-field car-photo">${createPhotoLink(car.photoUrl, 'Фото')}</div>
+                    <div class="car-field car-authorized">${createPhotoLink(car.officialPhotoUrl, 'Авторизованное фото')}</div>
+                </div>
+            `;
+        });
+        
+        carsHTML += `</div>`;
+        carsCell.innerHTML = carsHTML;
+    }
+    
+    carsRow.appendChild(carsCell);
+    
+    // Вставляем строку после строки пользователя
+    userRow.parentNode.insertBefore(carsRow, userRow.nextSibling);
+    
+    console.log(`✅ [DEBUG] Строка с автомобилями добавлена для пользователя ${userId}`);
 }
 
 // Функция для получения автомобилей пользователя

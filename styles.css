@@ -981,7 +981,7 @@ body {
     transform: scale(1.05);
 }
 
-/* Стили для отображения автомобилей пользователя */
+/* Стили для отображения автомобилей пользователя в таблице */
 .user-cars-row {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
     animation: slideDown 0.3s ease-out;
@@ -1000,15 +1000,20 @@ body {
 
 .user-cars-content {
     padding: 20px;
-    display: flex;
+    /*display: flex;*/
     flex-direction: column;
     gap: 15px;
+    width: 100%;
+    min-width: 100%;
+    max-width: none;
 }
 
 .cars-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
+    max-width: none;
 }
 
 .cars-header {
@@ -1016,6 +1021,17 @@ body {
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
     margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.no-cars-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
 }
 
 .car-row {
@@ -1027,6 +1043,8 @@ body {
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .car-row:hover {
@@ -1040,35 +1058,43 @@ body {
     color: rgba(255, 255, 255, 0.8);
     white-space: nowrap;
     min-width: 80px;
+    flex: 1;
+    text-align: center;
 }
 
 .car-model {
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
     min-width: 120px;
+    flex: 1.2;
 }
 
 .car-brand {
     font-weight: 500;
     min-width: 100px;
+    flex: 1.1;
 }
 
 .car-year {
     min-width: 60px;
     text-align: center;
+    flex: 0.8;
 }
 
 .car-color {
     min-width: 80px;
+    flex: 1;
 }
 
 .car-horsepower {
     min-width: 100px;
     text-align: center;
+    flex: 1;
 }
 
 .car-photo, .car-authorized {
     min-width: 100px;
+    flex: 1;
 }
 
 .car-photo-link {
@@ -1129,6 +1155,14 @@ body {
 }
 
 @media (max-width: 768px) {
+    .user-cars-content {
+        padding: 15px;
+    }
+    
+    .cars-header {
+        font-size: 14px;
+    }
+    
     .car-row {
         flex-direction: column;
         align-items: flex-start;
@@ -1142,6 +1176,7 @@ body {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 4px 0;
     }
     
     .car-field::before {
@@ -1149,6 +1184,7 @@ body {
         font-weight: 600;
         color: rgba(255, 255, 255, 0.7);
         margin-right: 10px;
+        flex-shrink: 0;
     }
     
     .car-model::before { content: "Модель:"; }
@@ -1158,6 +1194,18 @@ body {
     .car-horsepower::before { content: "Л.с.:"; }
     .car-photo::before { content: "Фото:"; }
     .car-authorized::before { content: "Авторизованная:"; }
+    
+    .no-cars-message {
+        padding: 15px;
+    }
+    
+    .no-cars-message i {
+        font-size: 20px !important;
+    }
+    
+    .no-cars-message p {
+        font-size: 14px;
+    }
 }
 
 /* User Profile Styles */
