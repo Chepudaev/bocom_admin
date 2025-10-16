@@ -915,6 +915,758 @@ body {
     background: rgba(0, 123, 255, 0.7);
 }
 
+/* Face-to-Face Detail Page Styles */
+.face-to-face-detail-header {
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background: #34495e;
+}
+
+/* BOCOM Header */
+.bocom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.bocom-logo {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    padding: 10px 20px;
+    border-radius: 8px;
+}
+
+.logo-text {
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.header-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.header-icon-btn {
+    background: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.header-icon-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* Face-to-Face Competition */
+.face-to-face-competition {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 30px;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 15px;
+    border: 1px solid #333;
+}
+
+.competitor {
+    flex: 1;
+    text-align: center;
+}
+
+.competitor-left {
+    order: 1;
+}
+
+.competitor-right {
+    order: 3;
+}
+
+.competitor-image {
+    margin-bottom: 15px;
+}
+
+.competitor-image img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+.competitor-stats {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #ccc;
+    position: relative;
+}
+
+.competitor-stats span {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.winner-badge {
+    background: #ffd700;
+    color: #000;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.competitor-info {
+    background: rgba(0, 123, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+.competitor-info h3 {
+    color: #007bff;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.competitor-info p {
+    color: #ccc;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.vs-section {
+    order: 2;
+    text-align: center;
+    margin: 0 30px;
+}
+
+.vs-text {
+    font-size: 48px;
+    font-weight: bold;
+    color: #007bff;
+    display: block;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.live-indicator {
+    text-align: center;
+}
+
+.live-badge {
+    background: #dc3545;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+    animation: pulse 2s infinite;
+}
+
+.translation-text {
+    color: #ccc;
+    font-size: 12px;
+    display: block;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Race Visual */
+.race-visual {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.car-left, .car-right {
+    flex: 1;
+    text-align: center;
+}
+
+.car-left img, .car-right img {
+    max-width: 150px;
+    height: auto;
+    filter: brightness(0.8);
+}
+
+/* Rounds Section */
+.rounds-section {
+    margin-bottom: 40px;
+}
+
+.rounds-section h3 {
+    color: #007bff;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.rounds-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.round-item {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.round-header {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 16px;
+}
+
+.round-status {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.round-status.completed {
+    background: #28a745;
+    color: white;
+}
+
+.round-status.upcoming {
+    background: #ffc107;
+    color: #000;
+}
+
+.round-status.active {
+    background: #dc3545;
+    color: white;
+}
+
+.round-results {
+    display: flex;
+    gap: 20px;
+}
+
+.round-result {
+    text-align: center;
+    min-width: 120px;
+}
+
+.round-result h4 {
+    color: #007bff;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.round-result .points {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.round-result .outcome {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-top: 5px;
+}
+
+.round-result .outcome.win {
+    background: #28a745;
+    color: white;
+}
+
+.round-result .outcome.loss {
+    background: #dc3545;
+    color: white;
+}
+
+.round-result .outcome.draw {
+    background: #6c757d;
+    color: white;
+}
+
+/* Track Layout Section */
+.track-layout-section {
+    margin-bottom: 40px;
+}
+
+.track-layout-section h3 {
+    color: #007bff;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.track-map {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.track-map img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.compass-icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: #dc3545;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+/* Face-to-Face Footer */
+.face-to-face-footer {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    padding: 40px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    text-align: center;
+}
+
+.footer-branding {
+    margin-bottom: 30px;
+}
+
+.footer-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.contact-text {
+    color: #ccc;
+    font-size: 16px;
+}
+
+.contact-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    gap: 30px;
+}
+
+.contact-column {
+    flex: 1;
+    text-align: left;
+}
+
+.contact-column p {
+    color: #ccc;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.contact-column strong {
+    color: #007bff;
+}
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-link:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.cta-section p {
+    color: #ccc;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.register-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive Design for Face-to-Face Detail */
+@media (max-width: 768px) {
+    .face-to-face-competition {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .competitor-left,
+    .competitor-right {
+        order: unset;
+    }
+    
+    .vs-section {
+        order: unset;
+        margin: 0;
+    }
+    
+    .vs-text {
+        font-size: 36px;
+    }
+    
+    .contact-info {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .contact-column {
+        text-align: center;
+    }
+    
+    .round-item {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .round-results {
+        justify-content: center;
+    }
+}
+
+/* Updated styles for Face-to-Face Detail */
+.header-icons-only {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.track-map-placeholder {
+    background: #2c3e50;
+    color: #bdc3c7;
+    padding: 60px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #34495e;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Updated colors to match Face-to-Face list page */
+.face-to-face-competition {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.competitor-info {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-radius: 8px !important;
+}
+
+.round-item {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map-placeholder {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.face-to-face-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.round-status.completed {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-status.upcoming {
+    background: #ffc107 !important;
+    color: #000 !important;
+}
+
+.round-status.active {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.win {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-result .outcome.loss {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.draw {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.header-icon-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.header-icon-btn:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.back-button:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.competitor-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 2px solid #bdc3c7;
+    margin: 0 auto;
+}
+
+/* Alignment fixes for Face-to-Face Detail */
+.face-to-face-competition {
+    text-align: center !important;
+}
+
+.competitor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.competitor-stats {
+    text-align: center !important;
+    margin: 15px 0;
+}
+
+.competitor-info {
+    text-align: center !important;
+    width: 100%;
+    max-width: 200px;
+}
+
+.vs-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Updated colors to match Face-to-Face list page */
+.face-to-face-competition {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.competitor-info {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-radius: 8px !important;
+}
+
+.round-item {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map-placeholder {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.face-to-face-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.round-status.completed {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-status.upcoming {
+    background: #ffc107 !important;
+    color: #000 !important;
+}
+
+.round-status.active {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.win {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-result .outcome.loss {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.draw {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.header-icon-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.header-icon-btn:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.back-button:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
 /* Action Buttons */
 .action-buttons {
     display: flex;
@@ -1930,5 +2682,757 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 123, 255, 0.7);
+}
+
+/* Face-to-Face Detail Page Styles */
+.face-to-face-detail-header {
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background: #34495e;
+}
+
+/* BOCOM Header */
+.bocom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.bocom-logo {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    padding: 10px 20px;
+    border-radius: 8px;
+}
+
+.logo-text {
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.header-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.header-icon-btn {
+    background: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.header-icon-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* Face-to-Face Competition */
+.face-to-face-competition {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 30px;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 15px;
+    border: 1px solid #333;
+}
+
+.competitor {
+    flex: 1;
+    text-align: center;
+}
+
+.competitor-left {
+    order: 1;
+}
+
+.competitor-right {
+    order: 3;
+}
+
+.competitor-image {
+    margin-bottom: 15px;
+}
+
+.competitor-image img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+.competitor-stats {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #ccc;
+    position: relative;
+}
+
+.competitor-stats span {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.winner-badge {
+    background: #ffd700;
+    color: #000;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.competitor-info {
+    background: rgba(0, 123, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+.competitor-info h3 {
+    color: #007bff;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.competitor-info p {
+    color: #ccc;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.vs-section {
+    order: 2;
+    text-align: center;
+    margin: 0 30px;
+}
+
+.vs-text {
+    font-size: 48px;
+    font-weight: bold;
+    color: #007bff;
+    display: block;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.live-indicator {
+    text-align: center;
+}
+
+.live-badge {
+    background: #dc3545;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+    animation: pulse 2s infinite;
+}
+
+.translation-text {
+    color: #ccc;
+    font-size: 12px;
+    display: block;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Race Visual */
+.race-visual {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.car-left, .car-right {
+    flex: 1;
+    text-align: center;
+}
+
+.car-left img, .car-right img {
+    max-width: 150px;
+    height: auto;
+    filter: brightness(0.8);
+}
+
+/* Rounds Section */
+.rounds-section {
+    margin-bottom: 40px;
+}
+
+.rounds-section h3 {
+    color: #007bff;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.rounds-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.round-item {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.round-header {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 16px;
+}
+
+.round-status {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.round-status.completed {
+    background: #28a745;
+    color: white;
+}
+
+.round-status.upcoming {
+    background: #ffc107;
+    color: #000;
+}
+
+.round-status.active {
+    background: #dc3545;
+    color: white;
+}
+
+.round-results {
+    display: flex;
+    gap: 20px;
+}
+
+.round-result {
+    text-align: center;
+    min-width: 120px;
+}
+
+.round-result h4 {
+    color: #007bff;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.round-result .points {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.round-result .outcome {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-top: 5px;
+}
+
+.round-result .outcome.win {
+    background: #28a745;
+    color: white;
+}
+
+.round-result .outcome.loss {
+    background: #dc3545;
+    color: white;
+}
+
+.round-result .outcome.draw {
+    background: #6c757d;
+    color: white;
+}
+
+/* Track Layout Section */
+.track-layout-section {
+    margin-bottom: 40px;
+}
+
+.track-layout-section h3 {
+    color: #007bff;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.track-map {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.track-map img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.compass-icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: #dc3545;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+/* Face-to-Face Footer */
+.face-to-face-footer {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    padding: 40px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    text-align: center;
+}
+
+.footer-branding {
+    margin-bottom: 30px;
+}
+
+.footer-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.contact-text {
+    color: #ccc;
+    font-size: 16px;
+}
+
+.contact-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    gap: 30px;
+}
+
+.contact-column {
+    flex: 1;
+    text-align: left;
+}
+
+.contact-column p {
+    color: #ccc;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.contact-column strong {
+    color: #007bff;
+}
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-link:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.cta-section p {
+    color: #ccc;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.register-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive Design for Face-to-Face Detail */
+@media (max-width: 768px) {
+    .face-to-face-competition {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .competitor-left,
+    .competitor-right {
+        order: unset;
+    }
+    
+    .vs-section {
+        order: unset;
+        margin: 0;
+    }
+    
+    .vs-text {
+        font-size: 36px;
+    }
+    
+    .contact-info {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .contact-column {
+        text-align: center;
+    }
+    
+    .round-item {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .round-results {
+        justify-content: center;
+    }
+}
+
+/* Updated styles for Face-to-Face Detail */
+.header-icons-only {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.track-map-placeholder {
+    background: #2c3e50;
+    color: #bdc3c7;
+    padding: 60px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #34495e;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Updated colors to match Face-to-Face list page */
+.face-to-face-competition {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.competitor-info {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-radius: 8px !important;
+}
+
+.round-item {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map-placeholder {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.face-to-face-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.round-status.completed {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-status.upcoming {
+    background: #ffc107 !important;
+    color: #000 !important;
+}
+
+.round-status.active {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.win {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-result .outcome.loss {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.draw {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.header-icon-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.header-icon-btn:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.back-button:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.competitor-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 2px solid #bdc3c7;
+    margin: 0 auto;
+}
+
+/* Alignment fixes for Face-to-Face Detail */
+.face-to-face-competition {
+    text-align: center !important;
+}
+
+.competitor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.competitor-stats {
+    text-align: center !important;
+    margin: 15px 0;
+}
+
+.competitor-info {
+    text-align: center !important;
+    width: 100%;
+    max-width: 200px;
+}
+
+.vs-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Updated colors to match Face-to-Face list page */
+.face-to-face-competition {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.competitor-info {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-radius: 8px !important;
+}
+
+.round-item {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.track-map-placeholder {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.face-to-face-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.round-status.completed {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-status.upcoming {
+    background: #ffc107 !important;
+    color: #000 !important;
+}
+
+.round-status.active {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.win {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.round-result .outcome.loss {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.round-result .outcome.draw {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.header-icon-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.header-icon-btn:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.back-button:hover {
+    background: rgba(0, 123, 255, 0.2) !important;
+    border-color: #007bff !important;
+    color: #007bff !important;
 }
 

@@ -94,7 +94,7 @@
                         <i class="fas fa-calendar-alt"></i>
                         <span>События</span>
                     </a>
-                    <a href="#" class="nav-item" data-section="face-to-face">
+                    <a href="#" class="nav-item" data-section="faceToFace">
                         <i class="fas fa-trophy"></i>
                         <span>Face-to-Face</span>
                     </a>
@@ -257,6 +257,133 @@
                             <!-- Face-to-Face will be loaded here -->
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Face-to-Face Detail Section -->
+            <section id="faceToFaceDetailSection" class="content-section">
+                <div class="face-to-face-detail-header">
+                    <button class="back-button" onclick="showSection('faceToFace')">
+                        <i class="fas fa-arrow-left"></i>
+                        Назад к списку соревнований
+                    </button>
+                </div>
+                
+                <!-- Header Icons -->
+                <div class="header-icons-only">
+                    <button class="header-icon-btn">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fas fa-comments"></i>
+                    </button>
+                </div>
+
+                <!-- Face-to-Face Competition -->
+                <div class="face-to-face-competition">
+                    <div class="competitor competitor-left">
+                        <div class="competitor-image">
+                            <img id="competitor1Image" src="" alt="Участник 1" style="display: none;">
+                            <div id="competitor1Placeholder" class="competitor-placeholder">Нет</div>
+                        </div>
+                        <div class="competitor-stats">
+                            <span id="competitor1Wins">0</span> WINS
+                            <span id="competitor1Losses">0</span> LOOSE
+                        </div>
+                        <div class="competitor-info">
+                            <h3 id="competitor1Name">Your name</h3>
+                            <p id="competitor1Car">YOUR CAR</p>
+                            <p id="competitor1Age">Age: ***</p>
+                            <p id="competitor1Details">***</p>
+                        </div>
+                    </div>
+                    
+                    <div class="vs-section">
+                        <span class="vs-text">VS</span>
+                        <div class="live-indicator">
+                            <span class="live-badge">LIVE</span>
+                            <span class="translation-text">TRANSLATION</span>
+                        </div>
+                    </div>
+                    
+                    <div class="competitor competitor-right">
+                        <div class="competitor-image">
+                            <img id="competitor2Image" src="" alt="Участник 2" style="display: none;">
+                            <div id="competitor2Placeholder" class="competitor-placeholder">Нет</div>
+                        </div>
+                        <div class="competitor-stats">
+                            <span id="competitor2Wins">0</span> WINS
+                            <span id="competitor2Losses">0</span> LOOSE
+                            <div class="winner-badge" id="winnerBadge" style="display: none;">
+                                <i class="fas fa-star"></i> WINER
+                            </div>
+                        </div>
+                        <div class="competitor-info">
+                            <h3 id="competitor2Name">Your name</h3>
+                            <p id="competitor2Car">YOUR CAR</p>
+                            <p id="competitor2Age">Age: ***</p>
+                            <p id="competitor2Details">***</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Race Visual -->
+                <div class="race-visual">
+                    <div class="car-left">
+                        <img src="" alt="Car 1" id="car1Image">
+                    </div>
+                    <div class="car-right">
+                        <img src="" alt="Car 2" id="car2Image">
+                    </div>
+                </div>
+
+                <!-- Rounds Information -->
+                <div class="rounds-section">
+                    <h3>Раунды</h3>
+                    <div class="rounds-container" id="roundsContainer">
+                        <!-- Rounds will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Track Layout -->
+                <div class="track-layout-section">
+                    <h3>LAYOUT</h3>
+                    <div class="track-map">
+                        <div class="track-map-placeholder">
+                            Track Map
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="face-to-face-footer">
+                    <div class="footer-branding">
+                        <div class="footer-logo">BOCOM</div>
+                        <div class="contact-text">Contact us</div>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div class="contact-column">
+                            <p><strong>Phone:</strong> +102544459977</p>
+                            <p><strong>Address:</strong> 689 South E Street San Bernardino, CA 92408</p>
+                        </div>
+                        <div class="contact-column">
+                            <p><strong>Phone:</strong> +102544459977</p>
+                            <p><strong>Address:</strong> 689 South E Street San Bernardino, CA 92408</p>
+                        </div>
+                    </div>
+                    
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    
+                    <div class="cta-section">
+                        <p>Join as a driver or spectator</p>
+                        <button class="register-btn">REGISTER</button>
+                    </div>
                 </div>
             </section>
 

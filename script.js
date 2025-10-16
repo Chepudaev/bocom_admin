@@ -4,6 +4,26 @@ let authToken = localStorage.getItem('authToken');
 let refreshToken = localStorage.getItem('refreshToken');
 const API_BASE_URL = 'http://localhost:8080';
 
+// Функция для проверки статуса аутентификации
+function checkAuthStatus() {
+    if (!authToken) {
+        return { authenticated: false, message: 'Не авторизован' };
+    }
+    
+    if (isTokenExpired(authToken)) {
+        return { authenticated: false, message: 'Токен истек' };
+    }
+    
+    return { authenticated: true, message: 'Авторизован' };
+}
+
+// Функция для отображения статуса аутентификации в консоли (для отладки)
+function logAuthStatus() {
+    const status = checkAuthStatus();
+    console.log('Auth Status:', status);
+    return status;
+}
+
 // Система браузерной истории
 let isNavigating = false; // Флаг для предотвращения записи в историю при программной навигации
 
@@ -496,6 +516,8 @@ function showSection(sectionName) {
         sectionId = 'dashboard';
     } else if (sectionName === 'userProfile') {
         sectionId = 'userProfileSection';
+    } else if (sectionName === 'faceToFaceDetail') {
+        sectionId = 'faceToFaceDetailSection';
     } else {
         sectionId = sectionName + 'Section';
     }
@@ -522,7 +544,7 @@ function loadSectionData(sectionName) {
         case 'events':
             loadEvents();
             break;
-        case 'face-to-face':
+        case 'faceToFace':
             loadFaceToFace();
             break;
         case 'tracks':
@@ -530,6 +552,9 @@ function loadSectionData(sectionName) {
             break;
         case 'config':
             loadConfig();
+            break;
+        case 'faceToFaceDetail':
+            // Данные уже загружены при переходе к детальной странице
             break;
         default:
             loadDashboardData();
@@ -934,19 +959,76 @@ async function deleteUser(userId) {
 // Events Functions
 async function loadEvents() {
     try {
+        console.log('=== ОТЛАДКА ЗАГРУЗКИ СОБЫТИЙ ===');
+        console.log('Auth Status:', logAuthStatus());
+        
+        // Проверяем аутентификацию перед загрузкой данных
+        if (!authToken || isTokenExpired(authToken)) {
+            console.log('❌ Токен отсутствует или истек, пытаемся обновить...');
+            const refreshed = await handleTokenExpiry();
+            if (!refreshed) {
+                console.log('❌ Не удалось обновить токен');
+                showMessage('Сессия истекла. Пожалуйста, войдите в систему заново.', 'error');
+                return;
+            }
+            console.log('✅ Токен успешно обновлен');
+        }
+        
+        console.log('🔄 Загружаем события с API...');
         const events = await fetchData('/api/events');
+        console.log('📋 Получены события:', events);
+        console.log('📊 Количество событий:', events ? events.length : 'null');
+        
         displayEvents(events);
+        console.log('✅ События отображены');
     } catch (error) {
-        console.error('Error loading events:', error);
-        showMessage('Ошибка загрузки событий', 'error');
+        console.error('❌ Ошибка загрузки событий:', error);
+        
+        // Более детальная обработка ошибок
+        if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+            showMessage('Сессия истекла. Пожалуйста, войдите в систему заново.', 'error');
+        } else if (error.message.includes('403')) {
+            showMessage('Недостаточно прав для просмотра событий', 'error');
+        } else {
+            showMessage('Ошибка загрузки событий: ' + error.message, 'error');
+        }
+        
+        // Отображаем пустую таблицу при ошибке
+        displayEvents([]);
     }
+    
+    console.log('=== КОНЕЦ ОТЛАДКИ ЗАГРУЗКИ СОБЫТИЙ ===');
 }
 
 function displayEvents(events) {
+    console.log('=== ОТЛАДКА ОТОБРАЖЕНИЯ СОБЫТИЙ ===');
+    console.log('Получены события для отображения:', events);
+    
     const tbody = document.getElementById('eventsTableBody');
+    if (!tbody) {
+        console.error('❌ Элемент eventsTableBody не найден!');
+        return;
+    }
+    
     tbody.innerHTML = '';
     
-    events.forEach(event => {
+    if (!events || events.length === 0) {
+        console.log('📭 Нет событий для отображения');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="7" style="text-align: center; color: #888; padding: 20px;">
+                ${events === null ? 'Ошибка загрузки данных' : 'Нет событий'}
+            </td>
+        `;
+        tbody.appendChild(row);
+        console.log('✅ Отображено сообщение "Нет событий"');
+        return;
+    }
+    
+    console.log(`📋 Отображаем ${events.length} событий:`);
+    events.forEach((event, index) => {
+        console.log(`  ${index + 1}. ID: ${event.id}, Дата: ${event.date}, Тип: ${event.eventType}`);
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${event.id}</td>
@@ -964,6 +1046,9 @@ function displayEvents(events) {
         `;
         tbody.appendChild(row);
     });
+    
+    console.log('✅ Все события отображены в таблице');
+    console.log('=== КОНЕЦ ОТЛАДКИ ОТОБРАЖЕНИЯ СОБЫТИЙ ===');
 }
 
 async function deleteEvent(eventId) {
@@ -999,6 +1084,8 @@ function displayFaceToFace(faceToFaceList) {
     
     faceToFaceList.forEach(competition => {
         const row = document.createElement('tr');
+        row.setAttribute('data-face-to-face-id', competition.id);
+        row.style.cursor = 'pointer';
         row.innerHTML = `
             <td>${competition.id}</td>
             <td>${new Date(competition.startTime).toLocaleString('ru-RU')}</td>
@@ -1012,8 +1099,196 @@ function displayFaceToFace(faceToFaceList) {
                 </div>
             </td>
         `;
+        
+        // Добавляем обработчик клика для перехода к детальной странице
+        row.addEventListener('click', function(e) {
+            // Проверяем, что клик не по кнопке действия
+            if (!e.target.closest('.action-buttons')) {
+                showFaceToFaceDetail(competition.id);
+            }
+        });
+        
         tbody.appendChild(row);
     });
+}
+
+// Функция для показа детальной страницы Face-to-Face
+async function showFaceToFaceDetail(faceToFaceId) {
+    console.log('Показываем детальную страницу Face-to-Face:', faceToFaceId);
+    
+    try {
+        // Загружаем детальные данные соревнования
+        const faceToFaceData = await fetchData(`/api/face-to-face/${faceToFaceId}/with-rounds`);
+        
+        // Загружаем информацию о пользователях
+        const [user1Data, user2Data, car1Data, car2Data, eventData] = await Promise.all([
+            fetchData(`/api/users/${faceToFaceData.user1Id}`),
+            fetchData(`/api/users/${faceToFaceData.user2Id}`),
+            fetchData(`/api/cars/${faceToFaceData.autoUser1Id}`),
+            fetchData(`/api/cars/${faceToFaceData.autoUser2Id}`),
+            faceToFaceData.eventId ? fetchData(`/api/events/${faceToFaceData.eventId}`) : null
+        ]);
+        
+        // Заполняем данные на странице
+        populateFaceToFaceDetail(faceToFaceData, user1Data, user2Data, car1Data, car2Data, eventData);
+        
+        // Переходим к детальной странице
+        showSection('faceToFaceDetail');
+        
+    } catch (error) {
+        console.error('Ошибка загрузки детальной информации:', error);
+        showMessage('Ошибка загрузки детальной информации', 'error');
+    }
+}
+
+// Функция для заполнения данных на детальной странице
+function populateFaceToFaceDetail(faceToFaceData, user1Data, user2Data, car1Data, car2Data, eventData) {
+    // Заполняем информацию об участниках
+    document.getElementById('competitor1Name').textContent = user1Data.name || 'Unknown';
+    document.getElementById('competitor1Car').textContent = car1Data ? `${car1Data.brand} ${car1Data.model}` : 'Unknown Car';
+    document.getElementById('competitor1Age').textContent = `Age: ${user1Data.age || 'N/A'}`;
+    document.getElementById('competitor1Details').textContent = car1Data ? `${car1Data.horsepower}hp` : 'N/A';
+    
+    document.getElementById('competitor2Name').textContent = user2Data.name || 'Unknown';
+    document.getElementById('competitor2Car').textContent = car2Data ? `${car2Data.brand} ${car2Data.model}` : 'Unknown Car';
+    document.getElementById('competitor2Age').textContent = `Age: ${user2Data.age || 'N/A'}`;
+    document.getElementById('competitor2Details').textContent = car2Data ? `${car2Data.horsepower}hp` : 'N/A';
+    
+    // Устанавливаем фото участников
+    if (user1Data.profilePhotoUrl) {
+        document.getElementById('competitor1Image').src = user1Data.profilePhotoUrl;
+        document.getElementById('competitor1Image').style.display = 'block';
+        document.getElementById('competitor1Placeholder').style.display = 'none';
+    } else {
+        document.getElementById('competitor1Image').style.display = 'none';
+        document.getElementById('competitor1Placeholder').style.display = 'flex';
+    }
+    
+    if (user2Data.profilePhotoUrl) {
+        document.getElementById('competitor2Image').src = user2Data.profilePhotoUrl;
+        document.getElementById('competitor2Image').style.display = 'block';
+        document.getElementById('competitor2Placeholder').style.display = 'none';
+    } else {
+        document.getElementById('competitor2Image').style.display = 'none';
+        document.getElementById('competitor2Placeholder').style.display = 'flex';
+    }
+    
+    // Устанавливаем фото автомобилей
+    if (car1Data && car1Data.userPhotoUrl) {
+        document.getElementById('car1Image').src = car1Data.userPhotoUrl;
+    }
+    if (car2Data && car2Data.userPhotoUrl) {
+        document.getElementById('car2Image').src = car2Data.userPhotoUrl;
+    }
+    
+    // Заполняем раунды
+    populateRounds(faceToFaceData.rounds || []);
+    
+    // Заполняем информацию о треке
+    if (eventData && eventData.track) {
+        populateTrackInfo(eventData.track);
+    }
+    
+    // Рассчитываем статистику побед
+    calculateWinStats(faceToFaceData.rounds || []);
+}
+
+// Функция для заполнения раундов
+function populateRounds(rounds) {
+    const roundsContainer = document.getElementById('roundsContainer');
+    roundsContainer.innerHTML = '';
+    
+    rounds.forEach((round, index) => {
+        const roundItem = document.createElement('div');
+        roundItem.className = 'round-item';
+        
+        const status = round.userWinnerId ? 'completed' : 'upcoming';
+        const statusText = round.userWinnerId ? 'COMPLETED' : 'UPCOMING';
+        
+        let user1Outcome = 'pending';
+        let user2Outcome = 'pending';
+        let user1Points = '-';
+        let user2Points = '-';
+        
+        if (round.userWinnerId) {
+            if (round.userWinnerId === round.userId1) {
+                user1Outcome = 'win';
+                user2Outcome = 'loss';
+                user1Points = '1';
+                user2Points = '0';
+            } else if (round.userWinnerId === round.userId2) {
+                user1Outcome = 'loss';
+                user2Outcome = 'win';
+                user1Points = '0';
+                user2Points = '1';
+            } else {
+                // Ничья (если userWinnerId не соответствует ни одному из участников)
+                user1Outcome = 'draw';
+                user2Outcome = 'draw';
+                user1Points = '0';
+                user2Points = '0';
+            }
+        }
+        
+        roundItem.innerHTML = `
+            <div class="round-header">${index + 1} ROUND</div>
+            <div class="round-status ${status}">${statusText}</div>
+            <div class="round-results">
+                <div class="round-result">
+                    <h4>Participant 1</h4>
+                    <div class="points">${user1Points} POINTS</div>
+                    <div class="outcome ${user1Outcome}">${user1Outcome.toUpperCase()}</div>
+                </div>
+                <div class="round-result">
+                    <h4>Participant 2</h4>
+                    <div class="points">${user2Points} POINTS</div>
+                    <div class="outcome ${user2Outcome}">${user2Outcome.toUpperCase()}</div>
+                </div>
+            </div>
+        `;
+        
+        roundsContainer.appendChild(roundItem);
+    });
+}
+
+// Функция для заполнения информации о треке
+function populateTrackInfo(trackData) {
+    // Track Map теперь отображается как простой блок с текстом
+    // Можно добавить дополнительную логику здесь при необходимости
+    console.log('Track data:', trackData);
+}
+
+// Функция для расчета статистики побед
+function calculateWinStats(rounds) {
+    let user1Wins = 0;
+    let user2Wins = 0;
+    
+    rounds.forEach(round => {
+        if (round.userWinnerId) {
+            if (round.userWinnerId === round.userId1) {
+                user1Wins++;
+            } else if (round.userWinnerId === round.userId2) {
+                user2Wins++;
+            }
+        }
+    });
+    
+    document.getElementById('competitor1Wins').textContent = user1Wins;
+    document.getElementById('competitor1Losses').textContent = user2Wins;
+    document.getElementById('competitor2Wins').textContent = user2Wins;
+    document.getElementById('competitor2Losses').textContent = user1Wins;
+    
+    // Показываем значок победителя
+    const winnerBadge = document.getElementById('winnerBadge');
+    if (user1Wins > user2Wins) {
+        winnerBadge.style.display = 'inline-block';
+        winnerBadge.parentElement.parentElement.classList.add('winner');
+    } else if (user2Wins > user1Wins) {
+        winnerBadge.style.display = 'inline-block';
+        winnerBadge.parentElement.parentElement.classList.add('winner');
+    } else {
+        winnerBadge.style.display = 'none';
+    }
 }
 
 async function deleteFaceToFace(faceToFaceId) {
@@ -1116,6 +1391,12 @@ function openUserModal(userId = null) {
 }
 
 function openEventModal(eventId = null) {
+    // Проверяем аутентификацию перед открытием модального окна
+    if (!authToken || isTokenExpired(authToken)) {
+        showMessage('Сессия истекла. Пожалуйста, войдите в систему заново.', 'error');
+        return;
+    }
+    
     const modal = document.getElementById('eventModal');
     const title = document.getElementById('eventModalTitle');
     
@@ -1316,37 +1597,139 @@ function mapServerFieldToClientField(serverField) {
 async function handleEventSubmit(e) {
     e.preventDefault();
     
+    console.log('=== ОТЛАДКА СОЗДАНИЯ СОБЫТИЯ ===');
+    console.log('Auth Status:', logAuthStatus());
+    
+    // Проверяем аутентификацию перед отправкой
+    if (!authToken || isTokenExpired(authToken)) {
+        console.log('❌ Токен отсутствует или истек');
+        showMessage('Сессия истекла. Пожалуйста, войдите в систему заново.', 'error');
+        return;
+    }
+    
+    console.log('✅ Токен действителен');
+    
+    // Валидация полей формы
+    const date = document.getElementById('eventDate').value;
+    const eventType = document.getElementById('eventType').value;
+    const trackId = document.getElementById('eventTrackId').value;
+    const scheduleId = document.getElementById('eventScheduleId').value;
+    const driverLimit = document.getElementById('eventDriverLimit').value;
+    const spectatorLimit = document.getElementById('eventSpectatorLimit').value;
+    const driverPrice = document.getElementById('eventDriverPrice').value;
+    const spectatorPrice = document.getElementById('eventSpectatorPrice').value;
+    
+    console.log('Данные формы:', {
+        date, eventType, trackId, scheduleId, 
+        driverLimit, spectatorLimit, driverPrice, spectatorPrice
+    });
+    
+    // Проверяем обязательные поля
+    if (!date || !eventType || !trackId || !scheduleId || !driverLimit || !spectatorLimit || !driverPrice || !spectatorPrice) {
+        console.log('❌ Не все поля заполнены');
+        showMessage('Пожалуйста, заполните все обязательные поля', 'error');
+        return;
+    }
+    
+    // Проверяем числовые значения
+    if (parseInt(driverLimit) < 1) {
+        console.log('❌ Неверный лимит водителей');
+        showMessage('Лимит водителей должен быть больше 0', 'error');
+        return;
+    }
+    
+    if (parseInt(spectatorLimit) < 0) {
+        console.log('❌ Неверный лимит зрителей');
+        showMessage('Лимит зрителей не может быть отрицательным', 'error');
+        return;
+    }
+    
+    if (parseFloat(driverPrice) < 0) {
+        console.log('❌ Неверная цена для водителей');
+        showMessage('Цена для водителей не может быть отрицательной', 'error');
+        return;
+    }
+    
+    if (parseFloat(spectatorPrice) < 0) {
+        console.log('❌ Неверная цена для зрителей');
+        showMessage('Цена для зрителей не может быть отрицательной', 'error');
+        return;
+    }
+    
     const formData = {
-        date: document.getElementById('eventDate').value,
-        eventType: document.getElementById('eventType').value,
-        trackId: parseInt(document.getElementById('eventTrackId').value),
-        scheduleId: parseInt(document.getElementById('eventScheduleId').value),
-        driverLimit: parseInt(document.getElementById('eventDriverLimit').value),
-        spectatorLimit: parseInt(document.getElementById('eventSpectatorLimit').value),
-        driverPrice: parseFloat(document.getElementById('eventDriverPrice').value),
-        spectatorPrice: parseFloat(document.getElementById('eventSpectatorPrice').value)
+        date: date,
+        eventType: eventType,
+        trackId: parseInt(trackId),
+        scheduleId: parseInt(scheduleId),
+        driverLimit: parseInt(driverLimit),
+        spectatorLimit: parseInt(spectatorLimit),
+        driverPrice: parseFloat(driverPrice),
+        spectatorPrice: parseFloat(spectatorPrice)
     };
     
+    console.log('✅ Валидация прошла успешно');
+    console.log('Отправляем данные события:', formData);
+    
     try {
+        // Показываем индикатор загрузки
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+        submitBtn.disabled = true;
+        
+        console.log('🚀 [DEBUG] Отправляем данные события на сервер:', formData);
+        console.log('🌐 [DEBUG] API_BASE_URL:', API_BASE_URL);
+        console.log('🔗 [DEBUG] Полный URL:', `${API_BASE_URL}/api/events`);
+        
         const eventId = document.getElementById('eventModalTitle').textContent.includes('Изменить') 
             ? getCurrentEditingId() 
             : null;
             
         if (eventId) {
-            await fetchData(`/api/events/${eventId}`, 'PATCH', formData);
+            console.log('🔄 Обновляем событие с ID:', eventId);
+            const response = await fetchData(`/api/events/${eventId}`, 'PATCH', formData);
+            console.log('✅ [DEBUG] Событие успешно обновлено:', response);
             showMessage('Событие обновлено', 'success');
         } else {
-            await fetchData('/api/events', 'POST', formData);
+            console.log('➕ Создаем новое событие');
+            const response = await fetchData('/api/events', 'POST', formData);
+            console.log('✅ [DEBUG] Событие успешно создано:', response);
             showMessage('Событие создано', 'success');
         }
         
+        console.log('✅ Событие успешно сохранено');
         closeModal();
         loadEvents();
         loadDashboardData();
+        
     } catch (error) {
-        console.error('Error saving event:', error);
-        showMessage('Ошибка сохранения события', 'error');
+        console.error('❌ [DEBUG] Ошибка при создании события:', error);
+        console.error('❌ [DEBUG] Тип ошибки:', error.name);
+        console.error('❌ [DEBUG] Сообщение ошибки:', error.message);
+        console.error('❌ [DEBUG] Стек ошибки:', error.stack);
+        
+        // Более детальная обработка ошибок
+        if (error.message && error.message.includes('400')) {
+            showMessage('Проверьте правильность заполнения полей', 'error');
+        } else if (error.message && error.message.includes('401')) {
+            showMessage('Сессия истекла. Пожалуйста, войдите в систему заново.', 'error');
+        } else if (error.message && error.message.includes('403')) {
+            showMessage('Недостаточно прав для создания события', 'error');
+        } else if (error.message && error.message.includes('500')) {
+            showMessage('Ошибка сервера. Обратитесь к администратору', 'error');
+        } else if (error.message && error.message.includes('Failed to fetch')) {
+            showMessage('Ошибка подключения к серверу. Проверьте, что API сервер запущен на порту 8080', 'error');
+        } else {
+            showMessage(`Ошибка сохранения события: ${error.message}`, 'error');
+        }
+        
+        // Восстанавливаем кнопку
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
+    
+    console.log('=== КОНЕЦ ОТЛАДКИ ===');
 }
 
 async function handleTrackSubmit(e) {
@@ -1535,6 +1918,8 @@ async function handleCarSubmit(e) {
 
 // Helper Functions
 async function fetchData(url, method = 'GET', data = null, retryCount = 0) {
+    console.log(`🌐 FetchData: ${method} ${url}`, data ? { data } : '');
+    
     const options = {
         method,
         headers: {
@@ -1552,15 +1937,24 @@ async function fetchData(url, method = 'GET', data = null, retryCount = 0) {
             }
         }
         options.headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('🔑 Используем токен авторизации');
+    } else {
+        console.log('⚠️ Токен авторизации отсутствует');
     }
     
     if (data) {
         options.body = JSON.stringify(data);
+        console.log('📤 Отправляем данные:', data);
     }
     
+    console.log('🚀 Отправляем запрос:', `${API_BASE_URL}${url}`);
     const response = await fetch(`${API_BASE_URL}${url}`, options);
     
+    console.log(`📡 Получен ответ: ${response.status} ${response.statusText}`);
+    
     if (!response.ok) {
+        console.error(`❌ Ошибка ответа: ${response.status} ${response.statusText}`);
+        
         if (response.status === 401) {
             // Если это первая попытка и у нас есть refresh token, попробуем обновить
             if (retryCount === 0 && refreshToken) {
@@ -1578,14 +1972,20 @@ async function fetchData(url, method = 'GET', data = null, retryCount = 0) {
             logout();
             throw new Error('Unauthorized');
         }
+        
+        const errorText = await response.text();
+        console.error('Детали ошибки:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     if (method === 'DELETE') {
+        console.log('✅ DELETE запрос выполнен успешно');
         return null;
     }
     
-    return await response.json();
+    const result = await response.json();
+    console.log('✅ Успешный ответ:', result);
+    return result;
 }
 
 function showMessage(message, type = 'success') {
@@ -1773,6 +2173,16 @@ function debugUserPhoto(userId) {
 // Load form data for dropdowns
 async function loadEventFormData() {
     try {
+        // Проверяем аутентификацию перед загрузкой данных
+        if (!authToken || isTokenExpired(authToken)) {
+            console.log('Token expired or missing, attempting refresh...');
+            const refreshed = await handleTokenExpiry();
+            if (!refreshed) {
+                showMessage('Сессия истекла. Пожалуйста, войдите в систему заново.', 'error');
+                return;
+            }
+        }
+        
         const [tracks, schedules] = await Promise.all([
             fetchData('/api/tracks'),
             fetchData('/api/schedules')
@@ -1784,21 +2194,39 @@ async function loadEventFormData() {
         trackSelect.innerHTML = '<option value="">Выберите трек</option>';
         scheduleSelect.innerHTML = '<option value="">Выберите расписание</option>';
         
-        tracks.forEach(track => {
-            const option = document.createElement('option');
-            option.value = track.id;
-            option.textContent = `${track.state} - ${track.address}`;
-            trackSelect.appendChild(option);
-        });
+        if (tracks && tracks.length > 0) {
+            tracks.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.id;
+                option.textContent = `${track.state} - ${track.address}`;
+                trackSelect.appendChild(option);
+            });
+        } else {
+            console.warn('No tracks available');
+            trackSelect.innerHTML = '<option value="">Нет доступных треков</option>';
+        }
         
-        schedules.forEach(schedule => {
-            const option = document.createElement('option');
-            option.value = schedule.id;
-            option.textContent = schedule.name;
-            scheduleSelect.appendChild(option);
-        });
+        if (schedules && schedules.length > 0) {
+            schedules.forEach(schedule => {
+                const option = document.createElement('option');
+                option.value = schedule.id;
+                option.textContent = schedule.name;
+                scheduleSelect.appendChild(option);
+            });
+        } else {
+            console.warn('No schedules available');
+            scheduleSelect.innerHTML = '<option value="">Нет доступных расписаний</option>';
+        }
     } catch (error) {
         console.error('Error loading form data:', error);
+        showMessage('Ошибка загрузки данных формы: ' + error.message, 'error');
+        
+        // Устанавливаем значения по умолчанию при ошибке
+        const trackSelect = document.getElementById('eventTrackId');
+        const scheduleSelect = document.getElementById('eventScheduleId');
+        
+        trackSelect.innerHTML = '<option value="">Ошибка загрузки треков</option>';
+        scheduleSelect.innerHTML = '<option value="">Ошибка загрузки расписаний</option>';
     }
 }
 
